@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="../Magis.Api/Magis.Api.csproj" />
+  <Project Path="../Magis.Web/Magis.Web.csproj" />
+</Solution>

@@ -1,0 +1,103 @@
+# Pruebas de la API. En Visual Studio 2022 (17.8 o superior) abra este archivo y presione
+# "Enviar solicitud" sobre cada bloque. Cambie el puerto por el de su proyecto (ver consola al ejecutar).
+@host = https://localhost:7136
+
+### Entidades disponibles
+GET {{host}}/api
+
+### Parametros de una entidad (documentacion automatica)
+GET {{host}}/api/ayuda/cliente
+
+### Catalogos
+GET {{host}}/api/departamento
+
+###
+GET {{host}}/api/municipio?CodigoDepartamento=21
+
+###
+GET {{host}}/api/tipopago
+
+### Crear una marca
+POST {{host}}/api/marca
+Content-Type: application/json
+
+{ "Descripcion": "Nissan" }
+
+### Clientes: listar y buscar
+GET {{host}}/api/cliente
+
+###
+GET {{host}}/api/cliente/buscar?Criterio=Lopez
+
+### Registrar un cliente
+POST {{host}}/api/cliente
+Content-Type: application/json
+
+{
+  "PrimerNombre": "Pedro",
+  "PrimerApellido": "Ramirez",
+  "Correo": "pedro.ramirez@correo.com",
+  "DPI": "2600123450101",
+  "NIT": "7654321-0",
+  "FechaNacimiento": "1999-03-20",
+  "Telefono": "55544444"
+}
+
+### Registrar una referencia
+POST {{host}}/api/referencia
+Content-Type: application/json
+
+{
+  "PrimerNombre": "Rosa",
+  "PrimerApellido": "Mendez",
+  "CodigoTipoReferencia": 1,
+  "LugarTrabajo": "Mercado Municipal",
+  "TelefonoCelular": "55566666"
+}
+
+### Vehiculos libres (que aun no respaldan ningun credito)
+GET {{host}}/api/garantia?SoloDisponibles=1
+
+### Simular un credito (no guarda nada)
+GET {{host}}/api/credito/simular?ValorAgencia=150000&Enganche=30000
+
+### Plan de pagos simulado
+GET {{host}}/api/credito/simular-plan?ValorAgencia=150000&Enganche=30000
+
+### Emitir un credito  (Referencias acepta [1,2,3] o "1,2,3")
+POST {{host}}/api/credito
+Content-Type: application/json
+
+{
+  "CodigoDeudor": 1,
+  "CodigoGarantia": 1,
+  "CodigoVendedor": 1,
+  "Enganche": 30000,
+  "Referencias": [1, 2, 3]
+}
+
+### Listar creditos y ver uno
+GET {{host}}/api/credito
+
+###
+GET {{host}}/api/credito/obtener?NumeroCredito=CR-2026-00001
+
+### Plan de pagos de un credito, con el estado de cada cuota
+GET {{host}}/api/cuota?NumeroCredito=CR-2026-00001
+
+### Registrar un pago (efectivo no pide referencia; los demas medios si)
+POST {{host}}/api/pago
+Content-Type: application/json
+
+{
+  "NumeroCredito": "CR-2026-00001",
+  "Cuota": 3,
+  "CodigoTipoPago": 5,
+  "Monto": 1500
+}
+
+### Pagos de un credito
+GET {{host}}/api/pago?NumeroCredito=CR-2026-00001
+
+### Reportes disponibles (los agrega el compañero de reportes con sp_Reporte_NN_Nombre)
+GET {{host}}/api/reportes
