@@ -1,0 +1,26 @@
+@* Muestra los avisos que dejan los controladores: Exito , Fallo y Aviso. Lee TempDatao ViewData*@
+@{
+    var avisos = new (string Clave, string Tipo, string Icono)[]
+    {
+        ("Ok", "success", "bi-check-circle-fill"),
+        ("Error", "danger", "bi-exclamation-triangle-fill"),
+        ("Aviso", "warning", "bi-info-circle-fill")
+    };
+}
+@foreach (var aviso in avisos)
+{
+    var mensaje = (TempData[aviso.Clave] as string) ?? (ViewData[aviso.Clave] as string);
+    if (string.IsNullOrWhiteSpace(mensaje))
+    {
+        continue;
+    }
+
+    var clase = "alert alert-" + aviso.Tipo + " alert-dismissible d-flex align-items-start gap-2 no-print"
+                + (aviso.Clave == "Ok" ? " mg-auto-cerrar" : "");
+
+    <div class="@clase" role="alert">
+        <i class="bi @aviso.Icono mt-1"></i>
+        <div class="flex-grow-1">@mensaje</div>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+    </div>
+}

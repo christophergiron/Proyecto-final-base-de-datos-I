@@ -3,11 +3,9 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Magis.Api.Controllers;
 
-/// <summary>
-/// Documentacion automatica: GET api/ayuda/cliente muestra, para cada accion de la entidad,
-/// el metodo HTTP, el procedimiento almacenado y los nombres/tipos de sus parametros.
-/// Los parametros que se envian en el JSON deben llamarse exactamente asi (sin la arroba).
-/// </summary>
+// GET api/ayuda/cliente muestra, para cada accion de la entidad,
+// el metodo HTTP, el procedimiento almacenado y los nombres/tipos de sus parametros.
+// Los parametros que se envian en el JSON deben llamarse exactamente asi (sin la arroba).
 [ApiController]
 [Route("api/ayuda")]
 public class AyudaController : ControllerBase

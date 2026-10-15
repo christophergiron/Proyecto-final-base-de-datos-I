@@ -1,6 +1,7 @@
 namespace Magis.Api.Data;
 
-/// <summary>Error controlado de la API (se convierte en una respuesta JSON con el estado HTTP indicado).</summary>
+// Error controlado de la API (se convierte en una respuesta JSON con el estado HTTP indicado).
+
 public class ApiException : Exception
 {
     public int Status { get; }

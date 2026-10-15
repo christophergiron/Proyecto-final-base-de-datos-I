@@ -1,0 +1,165 @@
+@model PagoFormVm
+@{
+    ViewData["Title"] = "Registrar pago";
+    var f = Model.Form;
+    var c = Model.Credito;
+    var ahora = DateTime.Now.ToString("yyyy-MM-ddTHH:mm");
+    var pendientes = Model.Cuotas.Where(x => !EstadosCuota.EstaPagada(x["EstadoCuota"])).ToList();
+    var tablaCuotas = new CuotasVm { Filas = Model.Cuotas, Numero = f.NumeroCredito ?? "", Id = "tCuotasPago", Pagar = false };
+}
+
+<div class="mg-encabezado">
+    <div>
+        <h1>Registrar pago</h1>
+        <p>Aplique un pago a una cuota. Los pagos que no son en efectivo necesitan referencia bancaria.</p>
+    </div>
+    <a class="btn btn-outline-secondary" asp-action="Index">
+        <i class="bi bi-list-ul me-1"></i>Ver pagos
+    </a>
+</div>
+
+@if (c is null)
+{
+    @*elegir el crédito  *@
+    <section class="mg-panel mb-4">
+        <h2 class="mg-subtitulo"><span class="mg-paso">1</span>Elija el crédito</h2>
+        <form method="get" asp-action="Registrar" class="row g-2 align-items-end">
+            <div class="col-12 col-lg">
+                <label for="buscarCredito" class="form-label">Crédito</label>
+                <input type="text" class="form-control" id="buscarCredito" name="numero" list="listaCreditos"
+                       placeholder="Escriba el número de crédito o el nombre del cliente" autocomplete="off" required />
+                <datalist id="listaCreditos">
+                    @foreach (var o in Model.Creditos)
+                    {
+                        <option value="@o.Texto"></option>
+                    }
+                </datalist>
+                <div class="form-text">Aparecen los créditos con saldo pendiente (@Model.Creditos.Count).</div>
+            </div>
+            <div class="col-12 col-lg-auto">
+                <button type="submit" class="btn btn-primary"><i class="bi bi-arrow-right-circle me-1"></i>Continuar</button>
+            </div>
+        </form>
+    </section>
+}
+else
+{
+    var estadoTexto = c["EstadoDescripcion"] ?? c["Estado"] ?? "";
+    var resumenCredito = c["Cliente"] + " · " + c["Vehiculo"] + (string.IsNullOrEmpty(estadoTexto) ? "" : " · " + estadoTexto);
+    <section class="mg-panel mb-4">
+        <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-2">
+            <div>
+                <h2 class="mg-subtitulo mb-1">Crédito @c["NumeroCredito"]</h2>
+                <div class="text-muted">@resumenCredito</div>
+            </div>
+            <a class="btn btn-sm btn-outline-secondary" asp-action="Registrar">Cambiar de crédito</a>
+        </div>
+        <div class="row g-3">
+            <div class="col-6 col-lg-3"><div class="mg-sim-dato"><small>Saldo pendiente</small><strong>@Formato.Quetzales(c.Decimal("SaldoPendiente"))</strong></div></div>
+            <div class="col-6 col-lg-3"><div class="mg-sim-dato"><small>Total pagado</small><strong>@Formato.Quetzales(c.Decimal("TotalPagado"))</strong></div></div>
+            <div class="col-6 col-lg-3"><div class="mg-sim-dato"><small>Cuotas pendientes</small><strong>@pendientes.Count de @Model.Cuotas.Count</strong></div></div>
+            <div class="col-6 col-lg-3"><div class="mg-sim-dato"><small>Plazo</small><strong>@c["Plazo"] meses</strong></div></div>
+        </div>
+    </section>
+
+    <form asp-action="Registrar" method="post" id="formPago" data-bloquear>
+        @if (!ViewData.ModelState.IsValid)
+        {
+            <div class="alert alert-danger" role="alert">
+                <div class="fw-semibold mb-1"><i class="bi bi-exclamation-triangle-fill me-1"></i>Revise lo siguiente:</div>
+                <ul class="mb-0">
+                    @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                    {
+                        <li>@error.ErrorMessage</li>
+                    }
+                </ul>
+            </div>
+        }
+
+        <input type="hidden" name="Form.NumeroCredito" value="@f.NumeroCredito" />
+
+        <section class="mg-panel mb-4">
+            <h2 class="mg-subtitulo"><span class="mg-paso">2</span>Datos del pago</h2>
+
+            @if (pendientes.Count == 0)
+            {
+                <div class="alert alert-info mb-0">Este crédito no tiene cuotas pendientes de pago.</div>
+            }
+            else
+            {
+                <div class="row g-3">
+                    <div class="col-12 col-md-6">
+                        <label for="pagoCuota" class="form-label">Cuota <span class="text-danger">*</span></label>
+                        <select class="form-select" id="pagoCuota" name="Form.Cuota">
+                            @foreach (var x in pendientes)
+                            {
+                                var numeroCuota = x["Cuota"];
+                                var pendiente = DatosApi.NumeroParaFormulario(x.Decimal("Pendiente"));
+                                var textoCuota = "Cuota " + numeroCuota + " · vence " + x.Mostrar("FechaVencimiento")
+                                                 + " · pendiente " + Formato.Quetzales(x.Decimal("Pendiente"))
+                                                 + " · " + x["EstadoCuota"];
+                                <option value="@numeroCuota" data-pendiente="@pendiente" selected="@(numeroCuota == f.Cuota)">@textoCuota</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="col-12 col-md-6">
+                        <label for="pagoTipo" class="form-label">Tipo de pago <span class="text-danger">*</span></label>
+                        <select class="form-select" id="pagoTipo" name="Form.CodigoTipoPago">
+                            <option value="">— Seleccione —</option>
+                            @foreach (var t in Model.TiposPago)
+                            {
+                                var efectivo = EstadosCuota.EsEfectivo(t.Texto) ? "1" : "0";
+                                <option value="@t.Valor" data-efectivo="@efectivo" selected="@(t.Valor == f.CodigoTipoPago)">@t.Texto</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="col-12 col-md-6">
+                        <label for="pagoMonto" class="form-label">Monto (Q) <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <span class="input-group-text">Q</span>
+                            <input type="number" class="form-control" id="pagoMonto" name="Form.Monto" value="@f.Monto"
+                                   min="0.01" step="0.01" inputmode="decimal" placeholder="0.00" />
+                            <button type="button" class="btn btn-outline-secondary" id="usarPendiente"
+                                    title="Usar lo que falta por pagar de la cuota">Pagar lo pendiente</button>
+                        </div>
+                        <div class="form-text" id="ayudaMonto">Puede pagar la cuota completa o un abono parcial.</div>
+                    </div>
+
+                    <div class="col-12 col-md-6">
+                        <label for="pagoFecha" class="form-label">Fecha y hora del pago</label>
+                        <input type="datetime-local" class="form-control" id="pagoFecha" name="Form.FechaPago"
+                               value="@f.FechaPago" max="@ahora" />
+                    </div>
+
+                    <div class="col-12" id="campoReferencia">
+                        <label for="pagoReferencia" class="form-label">
+                            Referencia bancaria <span class="text-danger">*</span>
+                        </label>
+                        <input type="text" class="form-control" id="pagoReferencia" name="Form.ReferenciaBancaria"
+                               value="@f.ReferenciaBancaria" maxlength="60" autocomplete="off"
+                               placeholder="Número de boleta, transferencia, cheque o autorización" />
+                        <div class="form-text">Obligatoria cuando el pago no es en efectivo.</div>
+                    </div>
+                </div>
+
+                <div class="d-flex flex-wrap gap-2 justify-content-end mt-4">
+                    <a class="btn btn-outline-secondary" asp-action="Cuenta" asp-route-numero="@f.NumeroCredito">Cancelar</a>
+                    <button type="submit" class="btn btn-success btn-lg">
+                        <i class="bi bi-check2-circle me-1"></i>Registrar pago
+                    </button>
+                </div>
+            }
+        </section>
+    </form>
+
+    <section class="mg-panel mb-4">
+        <h2 class="mg-subtitulo"><i class="bi bi-calendar-check me-2"></i>Estado de las cuotas</h2>
+        <partial name="_TablaCuotas" model="tablaCuotas" />
+    </section>
+}
+
+@section Scripts {
+    <script src="~/js/pagos.js" asp-append-version="true"></script>
+}

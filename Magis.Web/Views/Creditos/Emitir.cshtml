@@ -1,0 +1,287 @@
+@model CreditoFormVm
+@{
+    ViewData["Title"] = "Emitir crédito";
+    var f = Model.Form;
+    var hoy = DateTime.Today.ToString("yyyy-MM-dd");
+    var seleccionadas = new HashSet<int>(f.Referencias);
+    var vmMolde = new FiadorCamposVm { Prefijo = "Form.NuevosFiadores[__i__]" };
+}
+
+<div class="mg-encabezado">
+    <div>
+        <h1>Emitir crédito</h1>
+        <p>Simule el financiamiento, elija al cliente y al vehículo, y emita el crédito con su plan de pagos.</p>
+    </div>
+    <a class="btn btn-outline-secondary" asp-action="Index">
+        <i class="bi bi-list-ul me-1"></i>Ver créditos emitidos
+    </a>
+</div>
+
+<form asp-action="Emitir" method="post" id="formCredito" data-bloquear
+      data-url-simular="@Url.Action("Simular", "Creditos")"
+      data-url-plan="@Url.Action("SimularPlan", "Creditos")">
+
+    @if (!ViewData.ModelState.IsValid)
+    {
+        <div class="alert alert-danger" role="alert">
+            <div class="fw-semibold mb-1"><i class="bi bi-exclamation-triangle-fill me-1"></i>Revise lo siguiente:</div>
+            <ul class="mb-0">
+                @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                {
+                    <li>@error.ErrorMessage</li>
+                }
+            </ul>
+        </div>
+    }
+
+    <div class="row g-4">
+        @* Columna izquierda: datos *@
+        <div class="col-12 col-xl-7">
+
+            <section class="mg-panel mb-4">
+                <h2 class="mg-subtitulo"><span class="mg-paso">1</span>Cliente, vehículo y vendedor</h2>
+
+                <div class="row g-3">
+                    <div class="col-12">
+                        <label for="clienteTexto" class="form-label">Cliente <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="clienteTexto" list="listaClientes"
+                               placeholder="Escriba un nombre o DPI y elija de la lista" autocomplete="off"
+                               value="@f.TextoCliente" data-selector="CodigoDeudor" />
+                        <input type="hidden" name="Form.TextoCliente" id="clienteTextoOculto" value="@f.TextoCliente" />
+                        <input type="hidden" name="Form.CodigoDeudor" id="CodigoDeudor" value="@f.CodigoDeudor" />
+                        <datalist id="listaClientes">
+                            @foreach (var c in Model.Clientes)
+                            {
+                                <option value="@c.Texto" data-codigo="@c.Valor"></option>
+                            }
+                        </datalist>
+                        <div class="form-text">¿No está? <a asp-controller="Clientes" asp-action="Crear" target="_blank">Registre un cliente nuevo</a> y vuelva a cargar esta página.</div>
+                    </div>
+
+                    <div class="col-12">
+                        <label for="garantiaTexto" class="form-label">Vehículo disponible <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="garantiaTexto" list="listaGarantias"
+                               placeholder="Escriba marca, VIN o placa y elija de la lista" autocomplete="off"
+                               value="@f.TextoGarantia" data-selector="CodigoGarantia" />
+                        <input type="hidden" name="Form.TextoGarantia" id="garantiaTextoOculto" value="@f.TextoGarantia" />
+                        <input type="hidden" name="Form.CodigoGarantia" id="CodigoGarantia" value="@f.CodigoGarantia" />
+                        <datalist id="listaGarantias">
+                            @foreach (var g in Model.Garantias)
+                            {
+                                <option value="@g.Texto" data-codigo="@g.Valor" data-valor="@g.ValorAgencia"></option>
+                            }
+                        </datalist>
+                        <div class="form-text">
+                            Solo aparecen los vehículos que todavía no respaldan ningún crédito
+                            (@Model.Garantias.Count disponibles).
+                        </div>
+                    </div>
+
+                    <div class="col-12 col-md-7">
+                        <label for="CodigoVendedor" class="form-label">Vendedor <span class="text-danger">*</span></label>
+                        <select class="form-select" id="CodigoVendedor" name="Form.CodigoVendedor">
+                            <option value="">— Seleccione —</option>
+                            @foreach (var v in Model.Vendedores)
+                            {
+                                <option value="@v.Valor" selected="@(v.Valor == f.CodigoVendedor)">@v.Texto</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-12 col-md-5">
+                        <label for="Enganche" class="form-label">Enganche (Q) <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <span class="input-group-text">Q</span>
+                            <input type="number" class="form-control" id="Enganche" name="Form.Enganche"
+                                   value="@f.Enganche" min="0" step="0.01" inputmode="decimal" placeholder="0.00" />
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="mg-panel mb-4">
+                <h2 class="mg-subtitulo"><span class="mg-paso">2</span>Condiciones <small class="text-muted fw-normal">(opcionales)</small></h2>
+                <p class="text-muted small">Si deja un campo vacío, el sistema usa su valor por defecto. El simulador usa estos mismos valores.</p>
+
+                <div class="row g-3">
+                    <div class="col-12 col-md-6 col-xl-3">
+                        <label for="FechaCredito" class="form-label">Fecha del crédito</label>
+                        <input type="date" class="form-control" id="FechaCredito" name="Form.FechaCredito"
+                               value="@f.FechaCredito" max="@hoy" />
+                    </div>
+                    <div class="col-12 col-md-6 col-xl-3">
+                        <label for="Plazo" class="form-label">Plazo (meses)</label>
+                        <input type="number" class="form-control" id="Plazo" name="Form.Plazo"
+                               value="@f.Plazo" min="1" step="1" inputmode="numeric" placeholder="Por defecto" />
+                    </div>
+                    <div class="col-12 col-md-6 col-xl-3">
+                        <label for="TasaInteres" class="form-label">Tasa de interés (%)</label>
+                        <input type="number" class="form-control" id="TasaInteres" name="Form.TasaInteres"
+                               value="@f.TasaInteres" min="0" step="0.01" inputmode="decimal" placeholder="Por defecto" />
+                    </div>
+                    <div class="col-12 col-md-6 col-xl-3">
+                        <label for="PorcentajeComision" class="form-label">Comisión (%)</label>
+                        <input type="number" class="form-control" id="PorcentajeComision" name="Form.PorcentajeComision"
+                               value="@f.PorcentajeComision" min="0" step="0.01" inputmode="decimal" placeholder="Por defecto" />
+                    </div>
+                </div>
+            </section>
+
+            <section class="mg-panel mb-4">
+                <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-2">
+                    <h2 class="mg-subtitulo mb-0"><span class="mg-paso">3</span>Referencias personales</h2>
+                    <span class="mg-contador" id="contadorReferencias" data-minimo="3">0 seleccionadas · mínimo 3</span>
+                </div>
+                <p class="text-muted small">
+                    Elija al menos 3 referencias distintas. Solo aparecen las que aún no están asignadas a un crédito.
+                    ¿Necesita otra? <a asp-controller="Referencias" asp-action="Crear" target="_blank">Registre una referencia</a>
+                    y vuelva a cargar esta página.
+                </p>
+
+                @if (Model.Referencias.Count == 0)
+                {
+                    <div class="mg-vacio"><i class="bi bi-person-lines-fill"></i><p class="mb-0">No hay referencias libres. Registre al menos 3.</p></div>
+                }
+                else
+                {
+                    <div class="input-group mb-2 mg-buscador-tabla">
+                        <span class="input-group-text"><i class="bi bi-search"></i></span>
+                        <input type="search" class="form-control" id="filtroReferencias"
+                               placeholder="Filtrar referencias..." aria-label="Filtrar referencias" />
+                    </div>
+
+                    <div class="mg-ref-lista" id="listaReferencias">
+                        @foreach (var r in Model.Referencias)
+                        {
+                            var codigo = r.Entero("CodigoReferencia")!.Value;
+                            var textoBusqueda = (r["NombreCompleto"] + " " + r["Parentesco"] + " " + r["Telefono"] + " " + codigo);
+                            <label class="mg-ref" data-texto="@textoBusqueda">
+                                <input type="checkbox" class="form-check-input" name="Form.Referencias" value="@codigo"
+                                       checked="@seleccionadas.Contains(codigo)" />
+                                <span class="mg-ref-nombre">@r["NombreCompleto"]</span>
+                                <span class="mg-ref-detalle">
+                                    @r["Parentesco"]
+                                    @if (!string.IsNullOrWhiteSpace(r["Telefono"]))
+                                    {
+                                        <text> · @r["Telefono"]</text>
+                                    }
+                                    · #@codigo
+                                </span>
+                            </label>
+                        }
+                    </div>
+                }
+            </section>
+
+            <section class="mg-panel mb-4">
+                <h2 class="mg-subtitulo"><span class="mg-paso">4</span>Fiadores <small class="text-muted fw-normal">(opcional)</small></h2>
+
+                <div class="mb-3">
+                    <label for="FiadoresExistentes" class="form-label">Fiadores que ya existen</label>
+                    <input type="text" class="form-control" id="FiadoresExistentes" name="Form.FiadoresExistentes"
+                           value="@f.FiadoresExistentes" placeholder="Códigos de persona separados por coma, por ejemplo 7,8"
+                           autocomplete="off" />
+                </div>
+
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <label class="form-label mb-0">Fiadores nuevos</label>
+                    <button type="button" class="btn btn-sm btn-outline-primary" id="agregarFiador">
+                        <i class="bi bi-person-plus me-1"></i>Agregar fiador
+                    </button>
+                </div>
+                <p class="text-muted small">Se registran y se ligan al crédito justo después de emitirlo.</p>
+
+                <div id="fiadoresNuevos">
+                    @for (var i = 0; i < f.NuevosFiadores.Count; i++)
+                    {
+                        var vmFiador = new FiadorCamposVm { Prefijo = "Form.NuevosFiadores[" + i + "]", Datos = f.NuevosFiadores[i] };
+                        <div class="mg-fiador" data-fiador>
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <strong>Fiador nuevo</strong>
+                                <button type="button" class="btn btn-sm btn-outline-danger" data-quitar-fiador aria-label="Quitar fiador">
+                                    <i class="bi bi-x-lg"></i>
+                                </button>
+                            </div>
+                            <partial name="_FiadorCampos" model="vmFiador" />
+                        </div>
+                    }
+                </div>
+            </section>
+
+            <div class="d-flex flex-wrap gap-2 justify-content-end mb-4">
+                <a class="btn btn-outline-secondary" asp-action="Index">Cancelar</a>
+                <button type="submit" class="btn btn-primary btn-lg">
+                    <i class="bi bi-check2-circle me-1"></i>Emitir crédito
+                </button>
+            </div>
+        </div>
+
+        @*Columna derecha: simulador *@
+        <div class="col-12 col-xl-5">
+            <aside class="mg-panel mg-sticky" id="panelSimulador">
+                <h2 class="mg-subtitulo"><i class="bi bi-calculator me-2"></i>Simulador</h2>
+                <p class="text-muted small">
+                    Calcula la cuota y el costo real del financiamiento sin guardar nada.
+                    Use el enganche y las condiciones del formulario.
+                </p>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-12 col-md-6">
+                        <label for="simValorAgencia" class="form-label">Valor de agencia (Q)</label>
+                        <div class="input-group">
+                            <span class="input-group-text">Q</span>
+                            <input type="number" class="form-control" id="simValorAgencia" min="0" step="0.01"
+                                   inputmode="decimal" placeholder="0.00" />
+                        </div>
+                        <div class="form-text" id="ayudaValorAgencia">Se llena al elegir el vehículo, si tiene valor registrado.</div>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <label for="simDepreciacion" class="form-label">Depreciación (%)</label>
+                        <div class="input-group">
+                            <input type="number" class="form-control" id="simDepreciacion" min="0" max="100" step="0.01"
+                                   inputmode="decimal" placeholder="Por defecto" />
+                            <span class="input-group-text">%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex flex-wrap gap-2 mb-3">
+                    <button type="button" class="btn btn-primary" id="botonSimular">
+                        <i class="bi bi-calculator me-1"></i>Simular
+                    </button>
+                    <button type="button" class="btn btn-outline-primary" id="botonPlan">
+                        <i class="bi bi-table me-1"></i>Ver plan de pagos
+                    </button>
+                </div>
+
+                <div id="resultadoSimulacion" aria-live="polite">
+                    <div class="mg-vacio py-4">
+                        <i class="bi bi-calculator"></i>
+                        <p class="mb-0">Escriba el valor de agencia y el enganche, y pulse <strong>Simular</strong>.</p>
+                    </div>
+                </div>
+            </aside>
+        </div>
+    </div>
+
+    @* Plan de pagos simulado: ocupa todo el ancho debajo del formulario *@
+    <section class="mg-panel mt-1 mb-4 d-none" id="panelPlan">
+        <div id="resultadoPlan"></div>
+    </section>
+</form>
+
+@* Molde de un fiador nuevo *@
+<template id="moldeFiador">
+    <div class="mg-fiador" data-fiador>
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <strong>Fiador nuevo</strong>
+            <button type="button" class="btn btn-sm btn-outline-danger" data-quitar-fiador aria-label="Quitar fiador">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        </div>
+        <partial name="_FiadorCampos" model="vmMolde" />
+    </div>
+</template>
+
+@section Scripts {
+    <script src="~/js/creditos.js" asp-append-version="true"></script>
+}

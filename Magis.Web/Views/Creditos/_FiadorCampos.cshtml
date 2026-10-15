@@ -1,0 +1,44 @@
+@* Campos de un fiador permite usarlo en el formulario de emisión y en el detalle del crédito . Los nombres de campo son los de /api/ayuda/fiador. *@
+@model FiadorCamposVm
+@{
+    var p = Model.Prefijo;
+    var d = Model.Datos;
+}
+<div class="row g-3">
+    <div class="col-12 col-md-6 col-xl-3">
+        <label class="form-label">Primer nombre <span class="text-danger">*</span></label>
+        <input class="form-control" name="@(p).PrimerNombre" value="@d.PrimerNombre" maxlength="60" autocomplete="off" />
+    </div>
+    <div class="col-12 col-md-6 col-xl-3">
+        <label class="form-label">Segundo nombre</label>
+        <input class="form-control" name="@(p).SegundoNombre" value="@d.SegundoNombre" maxlength="60" autocomplete="off" />
+    </div>
+    <div class="col-12 col-md-6 col-xl-3">
+        <label class="form-label">Primer apellido <span class="text-danger">*</span></label>
+        <input class="form-control" name="@(p).PrimerApellido" value="@d.PrimerApellido" maxlength="60" autocomplete="off" />
+    </div>
+    <div class="col-12 col-md-6 col-xl-3">
+        <label class="form-label">Segundo apellido</label>
+        <input class="form-control" name="@(p).SegundoApellido" value="@d.SegundoApellido" maxlength="60" autocomplete="off" />
+    </div>
+    <div class="col-12 col-md-6 col-xl-3">
+        <label class="form-label">DPI <span class="text-danger">*</span></label>
+        <input class="form-control" name="@(p).DPI" value="@d.DPI" inputmode="numeric" maxlength="13" autocomplete="off" />
+    </div>
+    <div class="col-12 col-md-6 col-xl-3">
+        <label class="form-label">NIT <span class="text-danger">*</span></label>
+        <input class="form-control" name="@(p).NIT" value="@d.NIT" autocomplete="off" />
+    </div>
+    <div class="col-12 col-md-6 col-xl-3">
+        <label class="form-label">Correo <span class="text-danger">*</span></label>
+        <input type="email" class="form-control" name="@(p).Correo" value="@d.Correo" autocomplete="off" />
+    </div>
+    <div class="col-12 col-md-6 col-xl-3">
+        <label class="form-label">Teléfono <span class="text-danger">*</span></label>
+        <input class="form-control" name="@(p).Telefono" value="@d.Telefono" inputmode="tel" autocomplete="off" />
+    </div>
+    <div class="col-12 col-md-6 col-xl-3">
+        <label class="form-label">Fecha de nacimiento</label>
+        <input type="date" class="form-control" name="@(p).FechaNacimiento" value="@d.FechaNacimiento" />
+    </div>
+</div>

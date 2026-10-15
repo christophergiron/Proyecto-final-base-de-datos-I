@@ -1,0 +1,123 @@
+@model DetalleCreditoVm
+@using System.Text.Json
+@{
+    var c = Model.Credito;
+    var numero = c["NumeroCredito"];
+    ViewData["Title"] = "Crédito " + numero;
+
+    string Q(string columna) => Formato.Quetzales(c.Decimal(columna));
+
+    var estadoTexto = c["EstadoDescripcion"] ?? c["Estado"] ?? "";
+    var activo = estadoTexto.Contains("Activo", StringComparison.OrdinalIgnoreCase);
+    var fiadorVm = new FiadorCamposVm { Prefijo = "Fiador", Datos = Model.FiadorNuevo };
+    var tablaCuotas = new CuotasVm { Filas = Model.Cuotas, Numero = numero ?? "", Id = "tCuotas", Pagar = true };
+    var tablaFiadores = new TablaModelo
+    {
+        Id = "tFiadores",
+        Filas = Model.Fiadores,
+        Buscador = false,
+        Ocultas = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "NumeroCredito" },
+        Vacio = "Este crédito no tiene fiadores."
+    };
+}
+
+@if (Model.Nuevo)
+{
+    <section class="mg-exito no-print" role="status">
+        <i class="bi bi-check-circle-fill"></i>
+        <div>
+            <small>Crédito emitido correctamente</small>
+            <strong>@numero</strong>
+            @if (!string.IsNullOrEmpty(Model.CuotaMensual))
+            {
+                <span>Cuota mensual: <b>@Model.CuotaMensual</b> · @c["Plazo"] cuotas</span>
+            }
+        </div>
+    </section>
+}
+
+<div class="mg-encabezado">
+    <div>
+        <h1>Crédito @numero</h1>
+        <p>
+            <span class="badge @(activo ? "text-bg-success" : "text-bg-secondary") me-1">@estadoTexto</span>
+            Emitido el @c.Mostrar("FechaCredito")
+        </p>
+    </div>
+    <div class="d-flex flex-wrap gap-2 no-print">
+        <a class="btn btn-outline-secondary" asp-action="Index"><i class="bi bi-arrow-left me-1"></i>Créditos</a>
+        <button type="button" class="btn btn-outline-secondary" data-imprimir>
+            <i class="bi bi-printer me-1"></i>Imprimir
+        </button>
+        <a class="btn btn-success" asp-controller="Pagos" asp-action="Cuenta" asp-route-numero="@numero">
+            <i class="bi bi-cash-coin me-1"></i>Pagos y cuotas
+        </a>
+        <a class="btn btn-primary" asp-action="Emitir"><i class="bi bi-file-earmark-plus me-1"></i>Emitir otro</a>
+    </div>
+</div>
+
+<section class="mg-panel mb-4">
+    <h2 class="mg-subtitulo">Cliente y vehículo</h2>
+    <dl class="row mb-0 mg-datos">
+        <dt class="col-sm-3 col-xl-2">Cliente</dt>
+        <dd class="col-sm-9 col-xl-4">
+            @if (!string.IsNullOrEmpty(c["CodigoDeudor"]))
+            {
+                <a asp-controller="Clientes" asp-action="Ficha" asp-route-id="@c["CodigoDeudor"]">@c["Cliente"]</a>
+            }
+            else
+            {
+                @c["Cliente"]
+            }
+        </dd>
+        <dt class="col-sm-3 col-xl-2">DPI / NIT</dt>
+        <dd class="col-sm-9 col-xl-4">@c["DPI"] · @c["NIT"]</dd>
+        <dt class="col-sm-3 col-xl-2">Vehículo</dt>
+        <dd class="col-sm-9 col-xl-4">@c["Vehiculo"]</dd>
+        <dt class="col-sm-3 col-xl-2">VIN / Placa</dt>
+        <dd class="col-sm-9 col-xl-4">@c["VIN"] · @c["Placa"]</dd>
+        <dt class="col-sm-3 col-xl-2">Vendedor</dt>
+        <dd class="col-sm-9 col-xl-4">@c["Vendedor"]</dd>
+        <dt class="col-sm-3 col-xl-2">Comisión</dt>
+        <dd class="col-sm-9 col-xl-4">@Formato.Porcentaje(c.Decimal("PorcentajeComision"))</dd>
+    </dl>
+</section>
+
+<div class="row g-3 mb-4">
+    <div class="col-6 col-lg-3"><div class="mg-sim-dato"><small>Monto financiado</small><strong>@Q("MontoFinanciado")</strong><span>Enganche @Q("Enganche")</span></div></div>
+    <div class="col-6 col-lg-3"><div class="mg-sim-dato"><small>Plazo y tasa</small><strong>@c["Plazo"] meses</strong><span>@Formato.Porcentaje(c.Decimal("TasaInteres")) anual</span></div></div>
+    <div class="col-6 col-lg-3"><div class="mg-sim-dato"><small>Total de intereses</small><strong>@Q("TotalIntereses")</strong><span>Recaudable @Q("TotalRecaudable")</span></div></div>
+    <div class="col-6 col-lg-3"><div class="mg-sim-dato"><small>Saldo pendiente</small><strong>@Q("SaldoPendiente")</strong><span>Pagado @Q("TotalPagado")</span></div></div>
+</div>
+
+<section class="mg-panel mb-4">
+    <h2 class="mg-subtitulo"><i class="bi bi-calendar-check me-2"></i>Plan de cuotas
+        @if (!string.IsNullOrEmpty(Model.CuotaMensual))
+        {
+            <small class="text-muted fw-normal ms-2">Cuota mensual @Model.CuotaMensual</small>
+        }
+    </h2>
+    <partial name="_TablaCuotas" model="tablaCuotas" />
+</section>
+
+<section class="mg-panel mb-4">
+    <div class="d-flex align-items-center justify-content-between mb-3">
+        <h2 class="mg-subtitulo mb-0"><i class="bi bi-people me-2"></i>Fiadores</h2>
+        <button type="button" class="btn btn-sm btn-outline-primary no-print" data-bs-toggle="collapse"
+                data-bs-target="#nuevoFiador" aria-expanded="false" aria-controls="nuevoFiador">
+            <i class="bi bi-person-plus me-1"></i>Agregar fiador
+        </button>
+    </div>
+
+    <div class="collapse mb-3 no-print" id="nuevoFiador">
+        <form asp-action="AgregarFiador" method="post" class="mg-fiador" data-bloquear>
+            <input type="hidden" name="numero" value="@numero" />
+            <partial name="_FiadorCampos" model="fiadorVm" />
+            <div class="d-flex justify-content-end mt-3">
+                <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1"></i>Registrar fiador</button>
+            </div>
+        </form>
+    </div>
+
+    <partial name="_TablaDatos" model="tablaFiadores" />
+</section>

@@ -3,13 +3,8 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Magis.Api.Controllers;
 
-/// <summary>
-/// Modulo de reportes. Cualquier procedimiento llamado  sp_Reporte_NN_Nombre  que exista en la base
-/// aparece automaticamente aqui, sin tocar el codigo de la API.
-///   GET api/reportes            -> lista de reportes con sus parametros
-///   GET api/reportes/7          -> ejecuta sp_Reporte_07_...   (tambien por nombre completo)
-///   GET api/reportes/7?FechaInicio=2026-01-01&amp;FechaFin=2026-12-31   -> filtros como query string
-/// </summary>
+// Modulo de reportes. Cualquier procedimiento llamado  sp_Reporte_NN_Nombre  que exista en la base
+// aparece automaticamente aqui, sin tocar el codigo de la API
 [ApiController]
 [Route("api/reportes")]
 public class ReportesController : ControllerBase

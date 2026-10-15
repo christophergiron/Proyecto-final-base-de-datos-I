@@ -1,0 +1,231 @@
+@model CatalogoVm
+@using System.Text.Json
+@{
+    var enEntidad = Model.Entidad is not null;
+    ViewData["Title"] = enEntidad ? Model.Titulo : "Catálogos y entidades";
+
+    var lista = Model.Lista;
+    var paginador = new PaginadorVm { Pagina = lista.Pagina, Paginas = lista.Paginas, Ruta = new Dictionary<string, object?>() };
+    if (enEntidad)
+    {
+        paginador.Ruta["entidad"] = Model.Entidad;
+        paginador.Ruta["q"] = Model.Criterio;
+        foreach (var filtro in Model.Filtros)
+        {
+            paginador.Ruta["f_" + filtro.Def.Nombre] = filtro.Valor;
+        }
+    }
+
+    var primera = lista.Filas.FirstOrDefault();
+    var columnas = primera is null ? new List<string>() : primera.Columnas.ToList();
+    var hayAcciones = Model.PuedeEditar || Model.PuedeEliminar;
+    var llavesCompletas = primera is not null && Model.Llaves.Count > 0 && Model.Llaves.All(primera.Tiene);
+}
+
+@if (!enEntidad)
+{
+    <div class="mg-encabezado">
+        <div>
+            <h1>Catálogos y entidades</h1>
+            <p>Administre los catálogos del sistema. Las pantallas se arman con lo que describe la API, así que reflejan siempre sus campos actuales.</p>
+        </div>
+    </div>
+
+    var catalogos = Model.Entidades.Where(e => e.EsCatalogo).ToList();
+    var otras = Model.Entidades.Where(e => !e.EsCatalogo).ToList();
+
+    <h2 class="mg-subtitulo">Catálogos</h2>
+    <div class="row g-3 mb-4">
+        @foreach (var e in catalogos)
+        {
+            <div class="col-12 col-sm-6 col-xl-4">
+                <a class="mg-tarjeta-catalogo" asp-action="Index" asp-route-entidad="@e.Nombre">
+                    <i class="bi bi-collection"></i>
+                    <span>
+                        <strong>@e.Titulo</strong>
+                        <small>Ver, agregar, editar y eliminar</small>
+                    </span>
+                    <i class="bi bi-chevron-right ms-auto"></i>
+                </a>
+            </div>
+        }
+    </div>
+
+    @if (otras.Count > 0)
+    {
+        <h2 class="mg-subtitulo">Otras entidades <small class="text-muted fw-normal">(solo consulta)</small></h2>
+        <p class="text-muted small">Estas entidades se administran desde sus pantallas propias (clientes, créditos, pagos...). Aquí se pueden consultar tal como las devuelve la API.</p>
+        <div class="row g-3 mb-4">
+            @foreach (var e in otras)
+            {
+                <div class="col-12 col-sm-6 col-xl-4">
+                    <a class="mg-tarjeta-catalogo" asp-action="Index" asp-route-entidad="@e.Nombre">
+                        <i class="bi bi-table"></i>
+                        <span>
+                            <strong>@e.Titulo</strong>
+                            <small>Consultar</small>
+                        </span>
+                        <i class="bi bi-chevron-right ms-auto"></i>
+                    </a>
+                </div>
+            }
+        </div>
+    }
+}
+else
+{
+    <div class="mg-encabezado">
+        <div>
+            <h1>@Model.Titulo</h1>
+            <p>@(Model.EsCatalogo ? "Catálogo del sistema." : "Entidad de solo consulta.")</p>
+        </div>
+        <div class="d-flex flex-wrap gap-2 no-print">
+            <a class="btn btn-outline-secondary" asp-action="Index"><i class="bi bi-arrow-left me-1"></i>Todos los catálogos</a>
+            @if (Model.PuedeCrear)
+            {
+                <button type="button" class="btn btn-primary" data-bs-toggle="collapse" data-bs-target="#panelNuevo"
+                        aria-expanded="false" aria-controls="panelNuevo">
+                    <i class="bi bi-plus-lg me-1"></i>Agregar
+                </button>
+            }
+        </div>
+    </div>
+
+    @if (Model.PuedeCrear)
+    {
+        <div class="collapse mb-3 no-print" id="panelNuevo">
+            <form asp-action="Crear" method="post" class="mg-panel" data-bloquear>
+                <input type="hidden" name="entidad" value="@Model.Entidad" />
+                <h2 class="mg-subtitulo">Agregar registro</h2>
+                <div class="row g-3">
+                    @foreach (var campo in Model.CamposCrear)
+                    {
+                        <div class="col-12 col-md-6 col-xl-4">
+                            <partial name="_CampoCatalogo" model="campo" />
+                        </div>
+                    }
+                </div>
+                <div class="d-flex justify-content-end gap-2 mt-3">
+                    <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1"></i>Guardar</button>
+                </div>
+            </form>
+        </div>
+    }
+
+    @if (Model.TieneBuscar || Model.Filtros.Count > 0)
+    {
+        <form method="get" asp-action="Index" class="mg-panel mb-3 no-print">
+            <input type="hidden" name="entidad" value="@Model.Entidad" />
+            <div class="row g-2 align-items-end">
+                @foreach (var filtro in Model.Filtros)
+                {
+                    <div class="col-12 col-md-4 col-xl-3">
+                        <partial name="_CampoCatalogo" model="filtro" />
+                    </div>
+                }
+                @if (Model.TieneBuscar)
+                {
+                    <div class="col-12 col-md">
+                        <label for="criterio" class="form-label">Buscar</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-search"></i></span>
+                            <input type="search" id="criterio" name="q" value="@Model.Criterio" class="form-control"
+                                   placeholder="Texto a buscar..." />
+                        </div>
+                    </div>
+                }
+                <div class="col-12 col-md-auto d-flex gap-2">
+                    <button type="submit" class="btn btn-primary"><i class="bi bi-funnel me-1"></i>Consultar</button>
+                    <a class="btn btn-outline-secondary" asp-action="Index" asp-route-entidad="@Model.Entidad">Limpiar</a>
+                </div>
+            </div>
+            @if (Model.TieneBuscar && Model.Filtros.Count > 0)
+            {
+                <div class="form-text">Si escribe un texto de búsqueda, se ignoran los filtros.</div>
+            }
+        </form>
+    }
+
+    @if (lista.Filas.Count == 0)
+    {
+        <div class="mg-vacio">
+            <i class="bi bi-inbox"></i>
+            <p class="mb-0">No hay registros para mostrar.</p>
+        </div>
+    }
+    else
+    {
+        <div class="text-muted small mb-2">
+            Mostrando @lista.Desde–@lista.Hasta de @lista.Total @(lista.Total == 1 ? "registro" : "registros")
+        </div>
+
+        <div class="table-responsive mg-tabla-contenedor">
+            <table class="table table-hover table-sm align-middle mg-tabla">
+                <thead>
+                    <tr>
+                        @foreach (var columna in columnas)
+                        {
+                            <th scope="col">@Formato.Encabezado(columna)</th>
+                        }
+                        @if (hayAcciones && llavesCompletas)
+                        {
+                            <th scope="col" class="text-end no-print">Acciones</th>
+                        }
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var fila in lista.Filas)
+                    {
+                        <tr>
+                            @foreach (var columna in columnas)
+                            {
+                                var valor = fila.Valor(columna);
+                                var esNumero = valor?.ValueKind == JsonValueKind.Number;
+                                // En catálogos los números se muestran tal cual (un parámetro "Valor" puede ser un % o quetzales)
+                                var texto = esNumero && valor!.Value.TryGetDecimal(out var d)
+                                    ? d.ToString("0.####", System.Globalization.CultureInfo.InvariantCulture)
+                                    : fila.Mostrar(columna);
+                                <td class="@(esNumero ? "text-end text-nowrap" : "")">@texto</td>
+                            }
+                            @if (hayAcciones && llavesCompletas)
+                            {
+                                <td class="text-end text-nowrap no-print">
+                                    @if (Model.PuedeEditar)
+                                    {
+                                        var rutaEditar = new Dictionary<string, string> { ["entidad"] = Model.Entidad ?? "" };
+                                        foreach (var llave in Model.Llaves)
+                                        {
+                                            rutaEditar["k_" + llave] = fila[llave] ?? "";
+                                        }
+                                        <a class="btn btn-sm btn-outline-secondary" title="Editar" aria-label="Editar"
+                                           asp-action="Editar" asp-all-route-data="rutaEditar">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                    }
+                                    @if (Model.PuedeEliminar)
+                                    {
+                                        <form asp-action="Eliminar" method="post" class="d-inline" data-bloquear
+                                              data-confirmar="¿Eliminar este registro? Si está en uso, el sistema no lo permitirá.">
+                                            <input type="hidden" name="entidad" value="@Model.Entidad" />
+                                            @foreach (var llave in Model.Llaves)
+                                            {
+                                                var nombreLlave = "k_" + llave;
+                                                var valorLlave = fila[llave] ?? "";
+                                                <input type="hidden" name="@nombreLlave" value="@valorLlave" />
+                                            }
+                                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Eliminar" aria-label="Eliminar">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </form>
+                                    }
+                                </td>
+                            }
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <partial name="_Paginador" model="paginador" />
+    }
+}

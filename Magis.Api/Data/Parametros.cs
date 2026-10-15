@@ -4,11 +4,9 @@ using System.Text.RegularExpressions;
 
 namespace Magis.Api.Data;
 
-/// <summary>
-/// Convierte el query string o el JSON recibido en parametros para un procedimiento almacenado.
-/// El nombre de cada clave debe coincidir con el parametro del SP (sin la arroba).
-/// Los valores nulos o vacios se omiten: el SP usa entonces su valor por defecto (NULL).
-/// </summary>
+// Convierte el query string o el JSON recibido en parametros para un procedimiento almacenado
+// El nombre de cada clave debe coincidir con el parametro del SP 
+// Los valores nulos o vacios se omiten: el SP usa entonces su valor por defecto 
 public static class Parametros
 {
     private static readonly Regex NombreValido =
@@ -58,7 +56,7 @@ public static class Parametros
         JsonValueKind.Number => e.TryGetInt64(out var entero) ? (object)entero : e.GetDecimal(),
         JsonValueKind.True => true,
         JsonValueKind.False => false,
-        // [1,2,3] se envia como "1,2,3" (asi lo esperan @Referencias y @Fiadores)
+        // [1,2,3] se envia como 1,2,3
         JsonValueKind.Array => string.Join(",", e.EnumerateArray().Select(x => x.ToString())),
         _ => null
     };
@@ -66,7 +64,7 @@ public static class Parametros
     private static object ConvertirTexto(string texto)
     {
         texto = texto.Trim();
-        // Fechas ISO (2026-10-15 o 2026-10-15T14:30:00) se envian como fecha real, sin ambiguedad de idioma
+        // Fechas ISO se envian como fecha real, sin ambiguedad de idioma
         if (FormatoFecha.IsMatch(texto) &&
             DateTime.TryParse(texto, CultureInfo.InvariantCulture, DateTimeStyles.None, out var fecha))
             return fecha;

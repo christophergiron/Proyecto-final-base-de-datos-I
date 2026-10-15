@@ -1,8 +1,96 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
+@model InicioVm
+@{
+    ViewData["Title"] = "Inicio";
+
+    var accesos = new[]
+    {
+        new { Controlador = "Clientes", Icono = "bi-people", Titulo = "Clientes",
+              Detalle = "Registre y consulte clientes con sus teléfonos y direcciones." },
+        new { Controlador = "Creditos", Icono = "bi-file-earmark-plus", Titulo = "Emitir crédito",
+              Detalle = "Simule el financiamiento y emita un crédito con su plan de pagos." },
+        new { Controlador = "Pagos", Icono = "bi-cash-coin", Titulo = "Pagos y cuotas",
+              Detalle = "Registre pagos y abonos y revise el estado de cada cuota." },
+        new { Controlador = "Reportes", Icono = "bi-bar-chart-line", Titulo = "Reportes",
+              Detalle = "Reportes financieros de la cartera para tomar decisiones." }
+    };
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<section class="mg-hero">
+    <div class="mg-hero-texto">
+        <span class="mg-chip"><i class="bi bi-shield-check me-1"></i>Créditos prendarios para vehículos nuevos</span>
+        <h1>Bienvenido a MAGIS-AUTO</h1>
+        <p>
+            Registre clientes y vehículos, emita créditos con su plan de pagos, controle la recaudación
+            y consulte los reportes financieros de la cartera.
+        </p>
+    </div>
+
+    <div class="mg-hero-estado">
+        @if (Model.Conectada)
+        {
+            <div class="mg-estado mg-estado-ok">
+                <i class="bi bi-hdd-network-fill"></i>
+                <div>
+                    <strong>API conectada</strong>
+                    <small>@Model.ApiUrl · @Model.Entidades.Count entidades disponibles</small>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="mg-estado mg-estado-error">
+                <i class="bi bi-plug-fill"></i>
+                <div>
+                    <strong>Sin conexión con la API</strong>
+                    <small>@Model.Error</small>
+                    <a class="btn btn-sm btn-light mt-2" asp-controller="Home" asp-action="Index">
+                        <i class="bi bi-arrow-repeat me-1"></i>Reintentar
+                    </a>
+                </div>
+            </div>
+        }
+    </div>
+</section>
+
+<h2 class="mg-subtitulo">Accesos rápidos</h2>
+<div class="row g-3 mb-4">
+    @foreach (var acceso in accesos)
+    {
+        var listo = Menu.Buscar(acceso.Controlador)?.Listo ?? false;
+
+        <div class="col-12 col-md-6 col-xl-3">
+            @if (listo)
+            {
+                <a class="mg-acceso" asp-controller="@acceso.Controlador" asp-action="Index">
+                    <span class="mg-acceso-icono"><i class="bi @acceso.Icono"></i></span>
+                    <strong>@acceso.Titulo</strong>
+                    <small>@acceso.Detalle</small>
+                </a>
+            }
+            else
+            {
+                <div class="mg-acceso mg-acceso-deshabilitado" title="Disponible próximamente">
+                    <span class="mg-acceso-icono"><i class="bi @acceso.Icono"></i></span>
+                    <strong>@acceso.Titulo <em class="mg-pronto">Pronto</em></strong>
+                    <small>@acceso.Detalle</small>
+                </div>
+            }
+        </div>
+    }
 </div>
+
+@if (Model.Conectada && Model.Entidades.Count > 0)
+{
+    <details class="mg-panel mg-detalles">
+        <summary>
+            <i class="bi bi-diagram-3 me-2"></i>Entidades expuestas por la API
+            <span class="badge text-bg-primary ms-2">@Model.Entidades.Count</span>
+        </summary>
+        <div class="mg-entidades">
+            @foreach (var entidad in Model.Entidades)
+            {
+                <span class="mg-entidad" title="@entidad.Operaciones operaciones">@entidad.Nombre</span>
+            }
+        </div>
+    </details>
+}

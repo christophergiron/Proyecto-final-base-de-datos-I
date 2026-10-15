@@ -1,0 +1,125 @@
+@model ListaVm
+@{
+    ViewData["Title"] = "Referencias";
+
+    var paginador = new PaginadorVm
+    {
+        Pagina = Model.Pagina,
+        Paginas = Model.Paginas,
+        Ruta = new Dictionary<string, object?> { ["q"] = Model.Criterio }
+    };
+}
+
+<div class="mg-encabezado">
+    <div>
+        <h1>Referencias personales</h1>
+        <p>Cada crédito requiere un mínimo de 3 referencias distintas.</p>
+    </div>
+    <a class="btn btn-primary" asp-action="Crear">
+        <i class="bi bi-person-plus me-1"></i>Nueva referencia
+    </a>
+</div>
+
+<form method="get" asp-action="Index" class="mg-panel mb-3 no-print">
+    <div class="row g-2 align-items-center">
+        <div class="col-12 col-md">
+            <div class="input-group">
+                <span class="input-group-text"><i class="bi bi-search"></i></span>
+                <input type="search" name="q" value="@Model.Criterio" class="form-control"
+                       placeholder="Buscar referencias..." aria-label="Buscar referencias" />
+            </div>
+        </div>
+        <div class="col-12 col-md-auto d-flex gap-2">
+            <button type="submit" class="btn btn-primary"><i class="bi bi-search me-1"></i>Buscar</button>
+            @if (!string.IsNullOrEmpty(Model.Criterio))
+            {
+                <a class="btn btn-outline-secondary" asp-action="Index">Limpiar</a>
+            }
+        </div>
+    </div>
+</form>
+
+@if (Model.Filas.Count == 0)
+{
+    <div class="mg-vacio">
+        <i class="bi bi-person-lines-fill"></i>
+        <p class="mb-0">
+            @if (!string.IsNullOrEmpty(Model.Criterio))
+            {
+                <text>No se encontraron referencias que coincidan con "@Model.Criterio".</text>
+            }
+            else
+            {
+                <text>Todavía no hay referencias registradas.</text>
+            }
+        </p>
+    </div>
+}
+else
+{
+    <div class="text-muted small mb-2">
+        Mostrando @Model.Desde–@Model.Hasta de @Model.Total @(Model.Total == 1 ? "referencia" : "referencias")
+    </div>
+
+    <div class="table-responsive mg-tabla-contenedor">
+        <table class="table table-hover table-sm align-middle mg-tabla">
+            <thead>
+                <tr>
+                    <th scope="col">Código</th>
+                    <th scope="col">Nombre</th>
+                    <th scope="col">Tipo</th>
+                    <th scope="col">Teléfono</th>
+                    <th scope="col">Lugar de trabajo</th>
+                    <th scope="col">Estado</th>
+                    <th scope="col" class="text-end no-print">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var fila in Model.Filas)
+                {
+                    var id = fila["CodigoReferencia"];
+                    var nombre = fila["NombreCompleto"];
+                    var asignada = fila.Si("Asignada");
+
+                    <tr>
+                        <td class="text-muted">@id</td>
+                        <td class="fw-semibold">@nombre</td>
+                        <td>@fila["Parentesco"]</td>
+                        <td class="text-nowrap">@fila["Telefono"]</td>
+                        <td>@fila["LugarTrabajo"]</td>
+                        <td>
+                            @if (asignada)
+                            {
+                                <span class="badge text-bg-secondary">En un crédito</span>
+                            }
+                            else
+                            {
+                                <span class="badge text-bg-success">Libre</span>
+                            }
+                        </td>
+                        <td class="text-end text-nowrap no-print">
+                            <a asp-action="Editar" asp-route-id="@id" class="btn btn-sm btn-outline-secondary"
+                               title="Editar" aria-label="Editar"><i class="bi bi-pencil"></i></a>
+                            <form asp-action="Eliminar" asp-route-id="@id" method="post" class="d-inline"
+                                  data-confirmar="¿Eliminar la referencia de @(nombre)? Esta acción no se puede deshacer.">
+                                @if (asignada)
+                                {
+                                    <button type="button" class="btn btn-sm btn-outline-danger" disabled
+                                            title="Está asignada a un crédito: no se puede eliminar"
+                                            aria-label="No se puede eliminar"><i class="bi bi-trash"></i></button>
+                                }
+                                else
+                                {
+                                    <button type="submit" class="btn btn-sm btn-outline-danger"
+                                            title="Eliminar" aria-label="Eliminar"><i class="bi bi-trash"></i></button>
+                                }
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <partial name="_Paginador" model="paginador" />
+}

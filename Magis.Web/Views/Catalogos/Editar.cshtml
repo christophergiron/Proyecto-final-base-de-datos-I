@@ -1,0 +1,36 @@
+@model EditarCatalogoVm
+@{
+    ViewData["Title"] = "Editar · " + Model.Titulo;
+}
+
+<div class="mg-encabezado">
+    <div>
+        <h1>Editar registro</h1>
+        <p>@Model.Titulo</p>
+    </div>
+    <a class="btn btn-outline-secondary" asp-action="Index" asp-route-entidad="@Model.Entidad">
+        <i class="bi bi-arrow-left me-1"></i>Volver
+    </a>
+</div>
+
+<form asp-action="Editar" method="post" class="mg-panel" data-bloquear>
+    <input type="hidden" name="entidad" value="@Model.Entidad" />
+
+    <div class="row g-3">
+        @foreach (var campo in Model.Campos)
+        {
+            <div class="col-12 col-md-6">
+                <partial name="_CampoCatalogo" model="campo" />
+            </div>
+        }
+    </div>
+
+    <p class="text-muted small mt-3 mb-0">
+        Los campos de identificación (códigos) no se pueden cambiar.
+    </p>
+
+    <div class="d-flex flex-wrap gap-2 justify-content-end mt-3">
+        <a class="btn btn-outline-secondary" asp-action="Index" asp-route-entidad="@Model.Entidad">Cancelar</a>
+        <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1"></i>Guardar cambios</button>
+    </div>
+</form>

@@ -1,0 +1,48 @@
+@* Resultado de GET api/credito/simular. Cuota mensual, intereses, total a pagar y pérdida por depreciación. *@
+@model Fila
+@{
+    string Q(string columna) => Formato.Quetzales(Model.Decimal(columna));
+    var depreciacion = Model.Decimal("PorcentajeDepreciacion");
+    var textoDepreciacion = depreciacion.HasValue
+        ? "(depreciación de " + Formato.Porcentaje(depreciacion) + ")"
+        : "";
+}
+
+<div class="mg-sim-cuota">
+    <small>Cuota mensual</small>
+    <strong>@Q("CuotaMensual")</strong>
+    <span>@Model["Plazo"] cuotas · tasa @Formato.Porcentaje(Model.Decimal("TasaInteres")) anual</span>
+</div>
+
+<div class="mg-sim-grid">
+    <div class="mg-sim-dato">
+        <small>Monto financiado</small>
+        <strong>@Q("MontoFinanciado")</strong>
+        <span>Valor de agencia @Q("ValorAgencia") − enganche @Q("Enganche")</span>
+    </div>
+    <div class="mg-sim-dato">
+        <small>Total de intereses</small>
+        <strong>@Q("TotalIntereses")</strong>
+    </div>
+    <div class="mg-sim-dato">
+        <small>Total a pagar</small>
+        <strong>@Q("TotalPagadoAlFinal")</strong>
+        <span>Enganche + todas las cuotas</span>
+    </div>
+    <div class="mg-sim-dato">
+        <small>Costo extra sobre el contado</small>
+        <strong>@Q("CostoExtraSobreContado")</strong>
+    </div>
+</div>
+
+<div class="mg-sim-alerta">
+    <i class="bi bi-graph-down-arrow"></i>
+    <div>
+        <small>Pérdida inmediata por depreciación</small>
+        <strong>@Q("PerdidaInmediataPorDepreciacion")</strong>
+        <span>
+            El vehículo vale @Q("ValorComercialTrasDepreciar") al salir de la agencia
+            @textoDepreciacion
+        </span>
+    </div>
+</div>

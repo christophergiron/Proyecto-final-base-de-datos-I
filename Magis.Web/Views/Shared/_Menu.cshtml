@@ -1,0 +1,55 @@
+@{
+    var controladorActual = ViewContext.RouteData.Values["controller"]?.ToString() ?? "";
+    var accionActual = ViewContext.RouteData.Values["action"]?.ToString() ?? "";
+
+    // Si varios items comparten controlador, se resalta el de la acción actual;
+    // el item "Index" queda activo también en Detalle, Editar, etc.
+    bool EsActivo(MenuItem item, IEnumerable<MenuItem> hermanos)
+    {
+        if (!string.Equals(item.Controlador, controladorActual, StringComparison.OrdinalIgnoreCase)) return false;
+        var mismos = hermanos.Where(h => string.Equals(h.Controlador, item.Controlador, StringComparison.OrdinalIgnoreCase)).ToList();
+        if (mismos.Count <= 1) return true;
+        if (string.Equals(item.Accion, accionActual, StringComparison.OrdinalIgnoreCase)) return true;
+        var otraCoincide = mismos.Any(h => string.Equals(h.Accion, accionActual, StringComparison.OrdinalIgnoreCase));
+        return !otraCoincide && string.Equals(item.Accion, "Index", StringComparison.OrdinalIgnoreCase);
+    }
+}
+<div class="mg-brand">
+    <a asp-controller="Home" asp-action="Index">
+        <img src="~/img/logo.png" alt="MAGIS-AUTO Crédito Financiero Automotriz" />
+    </a>
+</div>
+
+<nav class="mg-menu" aria-label="Navegación principal">
+    @foreach (var grupo in Menu.Grupos)
+    {
+        <div class="mg-grupo">@grupo.Titulo</div>
+
+        foreach (var item in grupo.Items)
+        {
+            var activo = EsActivo(item, grupo.Items);
+            var claseItem = activo ? "mg-item activo" : "mg-item";
+
+            if (item.Listo)
+            {
+                <a class="@claseItem" asp-controller="@item.Controlador" asp-action="@item.Accion">
+                    <i class="bi @item.Icono"></i>
+                    <span>@item.Texto</span>
+                </a>
+            }
+            else
+            {
+                <span class="mg-item deshabilitado" title="Disponible próximamente">
+                    <i class="bi @item.Icono"></i>
+                    <span>@item.Texto</span>
+                    <em>Pronto</em>
+                </span>
+            }
+        }
+    }
+</nav>
+
+<div class="mg-pie-menu">
+    <small>Proyecto final · Base de Datos I</small>
+    <small>Universidad Mariano Gálvez de Guatemala</small>
+</div>

@@ -1,0 +1,132 @@
+@model ConsultaVm
+@{
+    var enEntidad = Model.Entidad is not null;
+    ViewData["Title"] = enEntidad ? "Consulta · " + Model.Titulo : "Consultas";
+
+    var lista = Model.Lista;
+    var paginador = new PaginadorVm { Pagina = lista.Pagina, Paginas = lista.Paginas, Ruta = new Dictionary<string, object?>() };
+    if (enEntidad)
+    {
+        paginador.Ruta["entidad"] = Model.Entidad;
+        paginador.Ruta["q"] = Model.Criterio;
+        foreach (var filtro in Model.Filtros)
+        {
+            paginador.Ruta["f_" + filtro.Nombre] = filtro.Valor;
+        }
+    }
+
+    var tabla = new TablaModelo
+    {
+        Id = "tConsulta",
+        Filas = lista.Filas,
+        Buscador = true,
+        Vacio = "No hay registros que coincidan con la consulta."
+    };
+
+    var rutaExportar = new Dictionary<string, string> { ["entidad"] = Model.Entidad ?? "", ["q"] = Model.Criterio ?? "" };
+    foreach (var filtro in Model.Filtros)
+    {
+        rutaExportar["f_" + filtro.Nombre] = filtro.Valor ?? "";
+    }
+}
+
+@if (!enEntidad)
+{
+    <div class="mg-encabezado">
+        <div>
+            <h1>Consultas</h1>
+            <p>Elija qué quiere consultar. Cada consulta muestra todos los registros y permite buscar por cualquier dato.</p>
+        </div>
+    </div>
+
+    @foreach (var grupo in Model.Grupos)
+    {
+        <h2 class="mg-subtitulo">@grupo.Titulo</h2>
+        <div class="row g-3 mb-4">
+            @foreach (var e in grupo.Items)
+            {
+                <div class="col-12 col-sm-6 col-xl-4">
+                    <a class="mg-tarjeta-catalogo" asp-action="Index" asp-route-entidad="@e.Nombre">
+                        <i class="bi bi-table"></i>
+                        <span>
+                            <strong>@e.Titulo</strong>
+                            <small>Ver todos y buscar</small>
+                        </span>
+                        <i class="bi bi-chevron-right ms-auto"></i>
+                    </a>
+                </div>
+            }
+        </div>
+    }
+}
+else
+{
+    <div class="mg-encabezado">
+        <div>
+            <h1>@Model.Titulo</h1>
+            <p>Consulta de solo lectura. Escriba un criterio para buscar en el servidor o use el filtro de la tabla para afinar la página.</p>
+        </div>
+        <div class="d-flex flex-wrap gap-2 no-print">
+            <a class="btn btn-outline-secondary" asp-action="Index"><i class="bi bi-arrow-left me-1"></i>Todas las consultas</a>
+            <a class="btn btn-outline-secondary" asp-action="Exportar" asp-all-route-data="rutaExportar">
+                <i class="bi bi-file-earmark-spreadsheet me-1"></i>Exportar a Excel (CSV)
+            </a>
+            <button type="button" class="btn btn-outline-secondary" data-imprimir><i class="bi bi-printer me-1"></i>Imprimir</button>
+        </div>
+    </div>
+
+    <form method="get" asp-action="Index" class="mg-panel mb-3 no-print">
+        <input type="hidden" name="entidad" value="@Model.Entidad" />
+        <div class="row g-2 align-items-end">
+            @foreach (var filtro in Model.Filtros)
+            {
+                var idFiltro = "f_" + filtro.Nombre;
+                <div class="col-12 col-md-4 col-xl-3">
+                    <label for="@idFiltro" class="form-label">@filtro.Etiqueta</label>
+                    <input type="text" class="form-control" id="@idFiltro" name="@idFiltro" value="@filtro.Valor" autocomplete="off" />
+                </div>
+            }
+            @if (Model.TieneBuscar)
+            {
+                <div class="col-12 col-md">
+                    <label for="criterio" class="form-label">Buscar</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-search"></i></span>
+                        <input type="search" id="criterio" name="q" value="@Model.Criterio" class="form-control"
+                               placeholder="Nombre, DPI, número, descripción..." />
+                    </div>
+                </div>
+            }
+            <div class="col-12 col-md-auto d-flex gap-2">
+                <button type="submit" class="btn btn-primary"><i class="bi bi-search me-1"></i>Consultar</button>
+                <a class="btn btn-outline-secondary" asp-action="Index" asp-route-entidad="@Model.Entidad">Limpiar</a>
+            </div>
+        </div>
+        @if (Model.TieneBuscar && Model.Filtros.Count > 0)
+        {
+            <div class="form-text">Si escribe un texto en Buscar, se ignoran los demás filtros.</div>
+        }
+    </form>
+
+    <div class="text-muted small mb-2">
+        @if (lista.Total == 0)
+        {
+            <text>Sin resultados</text>
+        }
+        else
+        {
+            <text>Mostrando @lista.Desde–@lista.Hasta de @lista.Total @(lista.Total == 1 ? "registro" : "registros")</text>
+        }
+        @if (!string.IsNullOrEmpty(Model.Criterio))
+        {
+            <text> · criterio: "@Model.Criterio"</text>
+        }
+    </div>
+
+    <partial name="_TablaDatos" model="tabla" />
+
+    @if (lista.Paginas > 1)
+    {
+        <partial name="_Paginador" model="paginador" />
+    }
+}

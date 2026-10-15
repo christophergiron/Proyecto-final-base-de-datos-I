@@ -1,36 +1,67 @@
-namespace Magis.Web
-{
-    public class Program
+using System.Net.Security;
+using Magis.Web.Services;
+using Microsoft.AspNetCore.Localization;
+
+var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddControllersWithViews();
+
+var apiBaseUrl = builder.Configuration["ApiBaseUrl"];
+if (string.IsNullOrWhiteSpace(apiBaseUrl))
+    throw new InvalidOperationException(
+        "Falta \"ApiBaseUrl\" en appsettings.json (por ejemplo \"https://localhost:7136\").");
+
+builder.Services
+    .AddHttpClient<ApiClient>(cliente =>
     {
-        public static void Main(string[] args)
+        cliente.BaseAddress = new Uri(apiBaseUrl.TrimEnd('/') + "/");
+        cliente.Timeout = TimeSpan.FromSeconds(90);
+    })
+    .ConfigurePrimaryHttpMessageHandler(servicios =>
+    {
+        var manejador = new HttpClientHandler();
+
+       
+        var entorno = servicios.GetRequiredService<IWebHostEnvironment>();
+        if (entorno.IsDevelopment())
         {
-            var builder = WebApplication.CreateBuilder(args);
-
-            // Add services to the container.
-            builder.Services.AddControllersWithViews();
-
-            var app = builder.Build();
-
-            // Configure the HTTP request pipeline.
-            if (!app.Environment.IsDevelopment())
-            {
-                app.UseExceptionHandler("/Home/Error");
-                // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
-                app.UseHsts();
-            }
-
-            app.UseHttpsRedirection();
-            app.UseRouting();
-
-            app.UseAuthorization();
-
-            app.MapStaticAssets();
-            app.MapControllerRoute(
-                name: "default",
-                pattern: "{controller=Home}/{action=Index}/{id?}")
-                .WithStaticAssets();
-
-            app.Run();
+            manejador.ServerCertificateCustomValidationCallback = (solicitud, certificado, cadena, errores) =>
+                errores == SslPolicyErrors.None || solicitud.RequestUri?.IsLoopback == true;
         }
-    }
+
+        return manejador;
+    });
+
+builder.Services.AddScoped<CatalogosService>();
+
+
+builder.Services.AddScoped<ParametrosApi>();
+
+var app = builder.Build();
+
+if (!app.Environment.IsDevelopment())
+{
+    app.UseExceptionHandler("/Home/Error");
+    app.UseHsts();
 }
+
+app.UseStatusCodePagesWithReExecute("/Home/Estado/{0}");
+
+app.UseHttpsRedirection();
+
+var cultura = "es-GT";
+app.UseRequestLocalization(new RequestLocalizationOptions
+{
+    DefaultRequestCulture = new RequestCulture(cultura),
+    SupportedCultures = new[] { new System.Globalization.CultureInfo(cultura) },
+    SupportedUICultures = new[] { new System.Globalization.CultureInfo(cultura) }
+});
+
+app.UseStaticFiles();
+app.UseRouting();
+
+app.MapControllerRoute(
+    name: "default",
+    pattern: "{controller=Home}/{action=Index}/{id?}");
+
+app.Run();

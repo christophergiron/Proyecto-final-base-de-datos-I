@@ -4,17 +4,8 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Magis.Api.Controllers;
 
-/// <summary>
 /// Un solo controlador para todas las entidades del sistema (ver Data/Catalogo.cs).
 ///   GET    api/{entidad}                 -> sp_{Entidad}_Listar     (filtros opcionales en el query string)
-///   GET    api/{entidad}/buscar?criterio -> sp_{Entidad}_Buscar
-///   POST   api/{entidad}                 -> sp_{Entidad}_Insertar   (cuerpo JSON)
-///   PUT    api/{entidad}                 -> sp_{Entidad}_Actualizar (cuerpo JSON)
-///   DELETE api/{entidad}?llaves          -> sp_{Entidad}_Eliminar   (llaves en el query string)
-///   GET    api/{entidad}/{obtener|simular|simular-plan}
-///   POST   api/{entidad}/registrar
-/// Toda respuesta correcta es un arreglo JSON de filas (puede venir vacio).
-/// </summary>
 [ApiController]
 [Route("api/{entidad}")]
 public class EntidadController : ControllerBase

@@ -1,18 +1,18 @@
 namespace Magis.Api.Data;
 
-/// <summary>Una entidad de la API y los procedimientos almacenados que se pueden ejecutar sobre ella.</summary>
+// Una entidad de la API y los procedimientos almacenados que se pueden ejecutar sobre ella
 public class EntidadDef
 {
     public Dictionary<string, string> Sp { get; } = new(StringComparer.OrdinalIgnoreCase);
 
-    /// <summary>Crea acciones estandar: la accion "listar" de "Cliente" -> sp_Cliente_Listar.</summary>
+    // Crea acciones estandar: la accion "listar" de "Cliente" -> sp_Cliente_Listar
     public EntidadDef(string nombre, params string[] acciones)
     {
         foreach (var accion in acciones)
             Sp[accion] = $"sp_{nombre}_{char.ToUpper(accion[0]) + accion[1..]}";
     }
 
-    /// <summary>Agrega o reemplaza una accion con un procedimiento de otro nombre.</summary>
+    // Agrega o reemplaza una accion con un procedimiento de otro nombre
     public EntidadDef Con(string accion, string procedimiento)
     {
         Sp[accion] = procedimiento;
@@ -20,10 +20,7 @@ public class EntidadDef
     }
 }
 
-/// <summary>
-/// Lista cerrada (whitelist) de lo que la API puede ejecutar.
-/// Ningun nombre de procedimiento llega desde el cliente: se busca aqui por entidad y accion.
-/// </summary>
+// Lista cerrada de lo que la API puede ejecutar.
 public static class Catalogo
 {
     private static readonly string[] Crud = { "listar", "buscar", "insertar", "actualizar", "eliminar" };

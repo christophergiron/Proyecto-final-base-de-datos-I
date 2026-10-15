@@ -1,0 +1,66 @@
+@* Resultado de GET api/credito/simular-plan *@
+@model List<Fila>
+@{
+    string Q(Fila f, string columna) => Formato.Quetzales(f.Decimal(columna));
+    decimal Suma(string columna) => Model.Sum(f => f.Decimal(columna) ?? 0m);
+}
+
+@if (Model.Count == 0)
+{
+    <div class="mg-vacio"><i class="bi bi-table"></i><p class="mb-0">La API no devolvió cuotas para esos datos.</p></div>
+}
+else
+{
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-2">
+        <strong class="text-nowrap">Plan de pagos simulado · @Model.Count cuotas</strong>
+        <button type="button" class="btn btn-sm btn-outline-secondary no-print" data-imprimir>
+            <i class="bi bi-printer me-1"></i>Imprimir
+        </button>
+    </div>
+
+    <div class="table-responsive mg-tabla-contenedor">
+        <table class="table table-hover table-sm align-middle mg-tabla">
+            <thead>
+                <tr>
+                    <th scope="col" class="text-end">Cuota</th>
+                    <th scope="col">Vence</th>
+                    <th scope="col" class="text-end">Capital</th>
+                    <th scope="col" class="text-end">Interés</th>
+                    <th scope="col" class="text-end">Manejo</th>
+                    <th scope="col" class="text-end">Seguro auto</th>
+                    <th scope="col" class="text-end">Seguro vida</th>
+                    <th scope="col" class="text-end">Total</th>
+                    <th scope="col" class="text-end">Saldo final</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var f in Model)
+                {
+                    <tr>
+                        <td class="text-end text-muted">@f["Cuota"]</td>
+                        <td class="text-nowrap">@f.Mostrar("FechaVencimiento")</td>
+                        <td class="text-end text-nowrap">@Q(f, "Capital")</td>
+                        <td class="text-end text-nowrap">@Q(f, "Interes")</td>
+                        <td class="text-end text-nowrap">@Q(f, "ManejoCuenta")</td>
+                        <td class="text-end text-nowrap">@Q(f, "SeguroAuto")</td>
+                        <td class="text-end text-nowrap">@Q(f, "SeguroVida")</td>
+                        <td class="text-end text-nowrap fw-semibold">@Q(f, "Total")</td>
+                        <td class="text-end text-nowrap">@Q(f, "SaldoFinal")</td>
+                    </tr>
+                }
+            </tbody>
+            <tfoot>
+                <tr class="fw-bold">
+                    <td colspan="2" class="text-end">Totales</td>
+                    <td class="text-end text-nowrap">@Formato.Quetzales(Suma("Capital"))</td>
+                    <td class="text-end text-nowrap">@Formato.Quetzales(Suma("Interes"))</td>
+                    <td class="text-end text-nowrap">@Formato.Quetzales(Suma("ManejoCuenta"))</td>
+                    <td class="text-end text-nowrap">@Formato.Quetzales(Suma("SeguroAuto"))</td>
+                    <td class="text-end text-nowrap">@Formato.Quetzales(Suma("SeguroVida"))</td>
+                    <td class="text-end text-nowrap">@Formato.Quetzales(Suma("Total"))</td>
+                    <td></td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+}

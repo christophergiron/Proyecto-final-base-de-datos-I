@@ -1,0 +1,75 @@
+@model EditarPagoVm
+@{
+    var p = Model.Pago;
+    var f = Model.Form;
+    var numero = f.NumeroCredito;
+    ViewData["Title"] = "Editar pago";
+    var ahora = DateTime.Now.ToString("yyyy-MM-ddTHH:mm");
+    var comprobante = string.IsNullOrEmpty(p["NumeroComprobante"]) ? "sin comprobante" : p["NumeroComprobante"];
+}
+
+<div class="mg-encabezado">
+    <div>
+        <h1>Editar pago</h1>
+        <p>Crédito @numero · cuota @f.Cuota · pago @f.NumeroPago · @comprobante</p>
+    </div>
+    <a class="btn btn-outline-secondary" asp-action="Cuenta" asp-route-numero="@numero">
+        <i class="bi bi-arrow-left me-1"></i>Volver
+    </a>
+</div>
+
+<form asp-action="Editar" method="post" id="formPago" data-bloquear class="mg-panel">
+    @if (!ViewData.ModelState.IsValid)
+    {
+        <div class="alert alert-danger" role="alert">
+            <ul class="mb-0">
+                @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                {
+                    <li>@error.ErrorMessage</li>
+                }
+            </ul>
+        </div>
+    }
+
+    <input type="hidden" name="Form.NumeroCredito" value="@f.NumeroCredito" />
+    <input type="hidden" name="Form.Cuota" value="@f.Cuota" />
+    <input type="hidden" name="Form.NumeroPago" value="@f.NumeroPago" />
+
+    <div class="alert alert-light border">
+        Monto del pago: <strong>@Formato.Quetzales(p.Decimal("Monto"))</strong>.
+        El monto no se puede cambiar; si fue un error, elimine el pago y regístrelo de nuevo.
+    </div>
+
+    <div class="row g-3">
+        <div class="col-12 col-md-6">
+            <label for="pagoTipo" class="form-label">Tipo de pago <span class="text-danger">*</span></label>
+            <select class="form-select" id="pagoTipo" name="Form.CodigoTipoPago">
+                <option value="">— Seleccione —</option>
+                @foreach (var t in Model.TiposPago)
+                {
+                    var efectivo = EstadosCuota.EsEfectivo(t.Texto) ? "1" : "0";
+                    <option value="@t.Valor" data-efectivo="@efectivo" selected="@(t.Valor == f.CodigoTipoPago)">@t.Texto</option>
+                }
+            </select>
+        </div>
+        <div class="col-12 col-md-6">
+            <label for="pagoFecha" class="form-label">Fecha y hora del pago</label>
+            <input type="datetime-local" class="form-control" id="pagoFecha" name="Form.FechaPago" value="@f.FechaPago" max="@ahora" />
+        </div>
+        <div class="col-12" id="campoReferencia">
+            <label for="pagoReferencia" class="form-label">Referencia bancaria <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" id="pagoReferencia" name="Form.ReferenciaBancaria"
+                   value="@f.ReferenciaBancaria" maxlength="60" autocomplete="off" />
+            <div class="form-text">Obligatoria cuando el pago no es en efectivo.</div>
+        </div>
+    </div>
+
+    <div class="d-flex flex-wrap gap-2 justify-content-end mt-4">
+        <a class="btn btn-outline-secondary" asp-action="Cuenta" asp-route-numero="@numero">Cancelar</a>
+        <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1"></i>Guardar cambios</button>
+    </div>
+</form>
+
+@section Scripts {
+    <script src="~/js/pagos.js" asp-append-version="true"></script>
+}

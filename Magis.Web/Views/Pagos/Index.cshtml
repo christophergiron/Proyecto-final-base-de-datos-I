@@ -1,0 +1,123 @@
+@model ListaVm
+@{
+    ViewData["Title"] = "Pagos";
+
+    var paginador = new PaginadorVm
+    {
+        Pagina = Model.Pagina,
+        Paginas = Model.Paginas,
+        Ruta = new Dictionary<string, object?> { ["q"] = Model.Criterio }
+    };
+}
+
+<div class="mg-encabezado">
+    <div>
+        <h1>Pagos</h1>
+        <p>Pagos registrados en los créditos. Cada pago genera su comprobante.</p>
+    </div>
+    <a class="btn btn-primary" asp-action="Registrar">
+        <i class="bi bi-cash-coin me-1"></i>Registrar pago
+    </a>
+</div>
+
+<form method="get" asp-action="Index" class="mg-panel mb-3 no-print">
+    <div class="row g-2 align-items-center">
+        <div class="col-12 col-md">
+            <div class="input-group">
+                <span class="input-group-text"><i class="bi bi-search"></i></span>
+                <input type="search" name="q" value="@Model.Criterio" class="form-control"
+                       placeholder="Buscar por crédito, cliente o comprobante..." aria-label="Buscar pagos" />
+            </div>
+        </div>
+        <div class="col-12 col-md-auto d-flex gap-2">
+            <button type="submit" class="btn btn-primary"><i class="bi bi-search me-1"></i>Buscar</button>
+            @if (!string.IsNullOrEmpty(Model.Criterio))
+            {
+                <a class="btn btn-outline-secondary" asp-action="Index">Limpiar</a>
+            }
+        </div>
+    </div>
+</form>
+
+@if (Model.Filas.Count == 0)
+{
+    <div class="mg-vacio">
+        <i class="bi bi-receipt"></i>
+        <p class="mb-0">
+            @if (!string.IsNullOrEmpty(Model.Criterio))
+            {
+                <text>No se encontraron pagos que coincidan con "@Model.Criterio".</text>
+            }
+            else
+            {
+                <text>Todavía no hay pagos registrados.</text>
+            }
+        </p>
+    </div>
+}
+else
+{
+    <div class="text-muted small mb-2">
+        Mostrando @Model.Desde–@Model.Hasta de @Model.Total @(Model.Total == 1 ? "pago" : "pagos")
+    </div>
+
+    <div class="table-responsive mg-tabla-contenedor">
+        <table class="table table-hover table-sm align-middle mg-tabla">
+            <thead>
+                <tr>
+                    <th scope="col">Comprobante</th>
+                    <th scope="col">Crédito</th>
+                    <th scope="col">Cliente</th>
+                    <th scope="col">Cuota</th>
+                    <th scope="col">Fecha</th>
+                    <th scope="col" class="text-end">Monto</th>
+                    <th scope="col">Tipo de pago</th>
+                    <th scope="col">Referencia</th>
+                    <th scope="col" class="text-end no-print">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var p in Model.Filas)
+                {
+                    var numero = p["NumeroCredito"];
+                    var cuota = p["Cuota"];
+                    var pago = p["NumeroPago"];
+                    var comprobante = string.IsNullOrEmpty(p["NumeroComprobante"]) ? "—" : p["NumeroComprobante"];
+                    <tr>
+                        <td class="text-nowrap fw-semibold">@comprobante</td>
+                        <td class="text-nowrap">
+                            <a asp-action="Cuenta" asp-route-numero="@numero" class="text-decoration-none">@numero</a>
+                        </td>
+                        <td>@p["Cliente"]</td>
+                        <td>@cuota<span class="text-muted"> · pago @pago</span></td>
+                        <td class="text-nowrap">@p.Mostrar("FechaPago")</td>
+                        <td class="text-end text-nowrap">@Formato.Quetzales(p.Decimal("Monto"))</td>
+                        <td>@p["TipoPago"]</td>
+                        <td>@p["ReferenciaBancaria"]</td>
+                        <td class="text-end text-nowrap no-print">
+                            <a class="btn btn-sm btn-outline-primary" title="Comprobante" aria-label="Comprobante"
+                               asp-action="Comprobante" asp-route-numero="@numero" asp-route-cuota="@cuota" asp-route-pago="@pago">
+                                <i class="bi bi-receipt"></i>
+                            </a>
+                            <a class="btn btn-sm btn-outline-secondary" title="Editar" aria-label="Editar"
+                               asp-action="Editar" asp-route-numero="@numero" asp-route-cuota="@cuota" asp-route-pago="@pago">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                            <form asp-action="Eliminar" method="post" class="d-inline" data-bloquear
+                                  data-confirmar="¿Eliminar este pago? La cuota y el saldo del crédito se recalcularán.">
+                                <input type="hidden" name="numero" value="@numero" />
+                                <input type="hidden" name="cuota" value="@cuota" />
+                                <input type="hidden" name="pago" value="@pago" />
+                                <button type="submit" class="btn btn-sm btn-outline-danger" title="Eliminar" aria-label="Eliminar">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <partial name="_Paginador" model="paginador" />
+}

@@ -1,0 +1,254 @@
+@model FichaClienteVm
+@{
+    var c = Model.Cliente;
+    var nombre = c["NombreCompleto"];
+    if (string.IsNullOrWhiteSpace(nombre))
+    {
+        nombre = string.Join(" ", new[]
+        {
+            c["PrimerNombre"], c["SegundoNombre"], c["PrimerApellido"], c["SegundoApellido"]
+        }.Where(p => !string.IsNullOrWhiteSpace(p)));
+    }
+    ViewData["Title"] = nombre;
+
+    var generoTexto = c["Genero"] switch { "M" => "Masculino", "F" => "Femenino", _ => c["Genero"] ?? "" };
+
+    var tiposTelefono = Model.TiposTelefono.Select(o => new SelectListItem(o.Texto, o.Valor)).ToList();
+    var tiposDireccion = Model.TiposDireccion.Select(o => new SelectListItem(o.Texto, o.Valor)).ToList();
+    var departamentos = Model.Departamentos.Select(o => new SelectListItem(o.Texto, o.Valor)).ToList();
+}
+
+<div class="mg-encabezado">
+    <div>
+        <h1>@nombre</h1>
+        <p>Cliente n.º @Model.CodigoDeudor</p>
+    </div>
+    <div class="d-flex flex-wrap gap-2 no-print">
+        <a class="btn btn-outline-secondary" asp-action="Index"><i class="bi bi-arrow-left me-1"></i>Clientes</a>
+        <a class="btn btn-primary" asp-action="Editar" asp-route-id="@Model.CodigoDeudor">
+            <i class="bi bi-pencil me-1"></i>Editar datos
+        </a>
+        <form asp-action="Eliminar" asp-route-id="@Model.CodigoDeudor" method="post" class="d-inline"
+              data-confirmar="¿Eliminar al cliente @(nombre)? Esta acción no se puede deshacer.">
+            <button type="submit" class="btn btn-outline-danger"><i class="bi bi-trash me-1"></i>Eliminar</button>
+        </form>
+    </div>
+</div>
+
+<section class="mg-panel mb-4">
+    <h2 class="mg-subtitulo">Datos personales</h2>
+    <dl class="row mb-0 mg-datos">
+        <dt class="col-sm-3 col-xl-2">DPI</dt>
+        <dd class="col-sm-9 col-xl-4">@c["DPI"]</dd>
+        <dt class="col-sm-3 col-xl-2">NIT</dt>
+        <dd class="col-sm-9 col-xl-4">@c["NIT"]</dd>
+        <dt class="col-sm-3 col-xl-2">Correo</dt>
+        <dd class="col-sm-9 col-xl-4">@c["Correo"]</dd>
+        <dt class="col-sm-3 col-xl-2">Teléfono</dt>
+        <dd class="col-sm-9 col-xl-4">@c["Telefono"]</dd>
+        <dt class="col-sm-3 col-xl-2">Nacimiento</dt>
+        <dd class="col-sm-9 col-xl-4">@c.Mostrar("FechaNacimiento")</dd>
+        <dt class="col-sm-3 col-xl-2">Género</dt>
+        <dd class="col-sm-9 col-xl-4">@generoTexto</dd>
+        <dt class="col-sm-3 col-xl-2">Pasaporte</dt>
+        <dd class="col-sm-9 col-xl-4">@c["NoPasaporte"]</dd>
+    </dl>
+</section>
+
+<div class="row g-4">
+    @* Teléfonos *@
+    <div class="col-12 col-xl-5">
+        <section class="mg-panel h-100">
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <h2 class="mg-subtitulo mb-0"><i class="bi bi-telephone me-2"></i>Teléfonos</h2>
+                <button type="button" class="btn btn-sm btn-primary no-print" data-nuevo-telefono>
+                    <i class="bi bi-plus-lg me-1"></i>Agregar
+                </button>
+            </div>
+
+            @if (Model.Telefonos.Count == 0)
+            {
+                <div class="mg-vacio"><i class="bi bi-telephone"></i><p class="mb-0">Sin teléfonos registrados.</p></div>
+            }
+            else
+            {
+                <ul class="list-group list-group-flush">
+                    @foreach (var t in Model.Telefonos)
+                    {
+                        <li class="list-group-item px-0 d-flex align-items-center gap-2">
+                            <div class="flex-grow-1">
+                                <div class="fw-semibold">@t.Numero</div>
+                                <small class="text-muted">@t.Tipo</small>
+                            </div>
+                            <div class="text-nowrap no-print">
+                                <button type="button" class="btn btn-sm btn-outline-secondary" title="Editar"
+                                        aria-label="Editar teléfono" data-editar-telefono
+                                        data-correlativo="@t.Correlativo" data-numero="@t.Numero"
+                                        data-tipo="@t.CodigoTipo">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                                <form asp-action="EliminarTelefono" method="post" class="d-inline"
+                                      data-confirmar="¿Eliminar el teléfono @(t.Numero)?">
+                                    <input type="hidden" name="codigoDeudor" value="@Model.CodigoDeudor" />
+                                    <input type="hidden" name="codigoPersona" value="@Model.CodigoPersona" />
+                                    <input type="hidden" name="correlativo" value="@t.Correlativo" />
+                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Eliminar"
+                                            aria-label="Eliminar teléfono"><i class="bi bi-trash"></i></button>
+                                </form>
+                            </div>
+                        </li>
+                    }
+                </ul>
+            }
+        </section>
+    </div>
+
+    @* ------------------------------------------------------------ Direcciones *@
+    <div class="col-12 col-xl-7">
+        <section class="mg-panel h-100">
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <h2 class="mg-subtitulo mb-0"><i class="bi bi-geo-alt me-2"></i>Direcciones</h2>
+                <button type="button" class="btn btn-sm btn-primary no-print" data-nueva-direccion>
+                    <i class="bi bi-plus-lg me-1"></i>Agregar
+                </button>
+            </div>
+
+            @if (Model.Direcciones.Count == 0)
+            {
+                <div class="mg-vacio"><i class="bi bi-geo-alt"></i><p class="mb-0">Sin direcciones registradas.</p></div>
+            }
+            else
+            {
+                <ul class="list-group list-group-flush">
+                    @foreach (var d in Model.Direcciones)
+                    {
+                        <li class="list-group-item px-0 d-flex align-items-center gap-2">
+                            <div class="flex-grow-1">
+                                <div class="fw-semibold">
+                                    @(string.IsNullOrWhiteSpace(d.Zona) ? "" : "Zona " + d.Zona + ", ")
+                                    @(string.IsNullOrWhiteSpace(d.Calle) ? "" : d.Calle)
+                                    @(string.IsNullOrWhiteSpace(d.Avenida) ? "" : " · Avenida " + d.Avenida)
+                                </div>
+                                <small class="text-muted">
+                                    @(d.Municipio + (string.IsNullOrWhiteSpace(d.Departamento) ? "" : ", " + d.Departamento))
+                                    · @d.Tipo
+                                </small>
+                            </div>
+                            <div class="text-nowrap no-print">
+                                <button type="button" class="btn btn-sm btn-outline-secondary" title="Editar"
+                                        aria-label="Editar dirección" data-editar-direccion
+                                        data-correlativo="@d.Correlativo" data-zona="@d.Zona" data-calle="@d.Calle"
+                                        data-avenida="@d.Avenida" data-departamento="@d.CodigoDepartamento"
+                                        data-municipio="@d.CodigoMunicipio" data-tipo="@d.CodigoTipo">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                                <form asp-action="EliminarDireccion" method="post" class="d-inline"
+                                      data-confirmar="¿Eliminar esta dirección?">
+                                    <input type="hidden" name="codigoDeudor" value="@Model.CodigoDeudor" />
+                                    <input type="hidden" name="codigoPersona" value="@Model.CodigoPersona" />
+                                    <input type="hidden" name="correlativo" value="@d.Correlativo" />
+                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Eliminar"
+                                            aria-label="Eliminar dirección"><i class="bi bi-trash"></i></button>
+                                </form>
+                            </div>
+                        </li>
+                    }
+                </ul>
+            }
+        </section>
+    </div>
+</div>
+
+@* ================================================================ Modal: teléfono *@
+<div class="modal fade no-print" id="modalTelefono" tabindex="-1" aria-labelledby="tituloTelefono" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <form asp-action="GuardarTelefono" method="post" class="modal-content" data-bloquear>
+            <div class="modal-header">
+                <h2 class="modal-title fs-5" id="tituloTelefono">Teléfono</h2>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" name="codigoDeudor" value="@Model.CodigoDeudor" />
+                <input type="hidden" name="codigoPersona" value="@Model.CodigoPersona" />
+                <input type="hidden" name="correlativo" id="telCorrelativo" />
+
+                <div class="mb-3">
+                    <label for="telNumero" class="form-label">Número <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="telNumero" name="numero" required
+                           inputmode="tel" autocomplete="off" />
+                </div>
+                <div class="mb-0">
+                    <label for="telTipo" class="form-label">Tipo de teléfono <span class="text-danger">*</span></label>
+                    <select class="form-select" id="telTipo" name="codigoTipoTelefono" asp-items="tiposTelefono" required>
+                        <option value="">— Seleccione —</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1"></i>Guardar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@* ================================================================ Modal: dirección *@
+<div class="modal fade no-print" id="modalDireccion" tabindex="-1" aria-labelledby="tituloDireccion" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <form asp-action="GuardarDireccion" method="post" class="modal-content" data-bloquear>
+            <div class="modal-header">
+                <h2 class="modal-title fs-5" id="tituloDireccion">Dirección</h2>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" name="codigoDeudor" value="@Model.CodigoDeudor" />
+                <input type="hidden" name="codigoPersona" value="@Model.CodigoPersona" />
+                <input type="hidden" name="correlativo" id="dirCorrelativo" />
+
+                <div class="row g-3">
+                    <div class="col-12 col-md-4">
+                        <label for="dirZona" class="form-label">Zona</label>
+                        <input type="text" class="form-control" id="dirZona" name="zona" autocomplete="off" />
+                    </div>
+                    <div class="col-12 col-md-5">
+                        <label for="dirCalle" class="form-label">Calle</label>
+                        <input type="text" class="form-control" id="dirCalle" name="calle" autocomplete="off" />
+                    </div>
+                    <div class="col-12 col-md-3">
+                        <label for="dirAvenida" class="form-label">Avenida</label>
+                        <input type="text" class="form-control" id="dirAvenida" name="avenida" autocomplete="off" />
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <label for="dirDepartamento" class="form-label">Departamento <span class="text-danger">*</span></label>
+                        <select class="form-select" id="dirDepartamento" name="codigoDepartamento"
+                                asp-items="departamentos" required>
+                            <option value="">— Seleccione —</option>
+                        </select>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <label for="dirMunicipio" class="form-label">Municipio <span class="text-danger">*</span></label>
+                        <select class="form-select" id="dirMunicipio" name="codigoMunicipio" required
+                                data-url="@Url.Action("Municipios", "Clientes")">
+                            <option value="">— Seleccione un departamento —</option>
+                        </select>
+                    </div>
+                    <div class="col-12">
+                        <label for="dirTipo" class="form-label">Tipo de dirección <span class="text-danger">*</span></label>
+                        <select class="form-select" id="dirTipo" name="codigoTipoDireccion"
+                                asp-items="tiposDireccion" required>
+                            <option value="">— Seleccione —</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1"></i>Guardar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/clientes.js" asp-append-version="true"></script>
+}

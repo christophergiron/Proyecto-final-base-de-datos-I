@@ -1,0 +1,51 @@
+@* Conserva en cada enlace los valores de Model.Ruta, los valores nulos o vacíos se omiten. Los enlaces apuntan a la acción indicada en Model.Accion. *@
+@using Microsoft.AspNetCore.Routing
+@model PaginadorVm
+@{
+    string Enlace(int pagina)
+    {
+        var valores = new RouteValueDictionary();
+        foreach (var par in Model.Ruta)
+        {
+            var texto = par.Value?.ToString();
+            if (!string.IsNullOrEmpty(texto))
+            {
+                valores[par.Key] = texto;
+            }
+        }
+        valores["pagina"] = pagina;
+        return Url.Action(Model.Accion, valores) ?? "#";
+    }
+
+    // Se muestran la primera, la última y las vecinas de la actual
+    var visibles = Enumerable.Range(1, Model.Paginas)
+        .Where(p => p == 1 || p == Model.Paginas || Math.Abs(p - Model.Pagina) <= 2)
+        .ToList();
+}
+
+@if (Model.Paginas > 1)
+{
+    <nav class="mt-3 no-print" aria-label="Paginación">
+        <ul class="pagination pagination-sm justify-content-center flex-wrap mb-0">
+            <li class="page-item @(Model.Pagina == 1 ? "disabled" : "")">
+                <a class="page-link" href="@Enlace(Math.Max(1, Model.Pagina - 1))">Anterior</a>
+            </li>
+
+            @for (var i = 0; i < visibles.Count; i++)
+            {
+                var p = visibles[i];
+                if (i > 0 && p - visibles[i - 1] > 1)
+                {
+                    <li class="page-item disabled"><span class="page-link">…</span></li>
+                }
+                <li class="page-item @(p == Model.Pagina ? "active" : "")">
+                    <a class="page-link" href="@Enlace(p)">@p</a>
+                </li>
+            }
+
+            <li class="page-item @(Model.Pagina == Model.Paginas ? "disabled" : "")">
+                <a class="page-link" href="@Enlace(Math.Min(Model.Paginas, Model.Pagina + 1))">Siguiente</a>
+            </li>
+        </ul>
+    </nav>
+}

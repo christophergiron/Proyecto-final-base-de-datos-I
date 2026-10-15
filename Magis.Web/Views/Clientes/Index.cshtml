@@ -1,0 +1,139 @@
+@model ClientesIndexVm
+@{
+    ViewData["Title"] = "Clientes";
+    var desde = Model.Total == 0 ? 0 : (Model.Pagina - 1) * Model.PorPagina + 1;
+    var hasta = (Model.Pagina - 1) * Model.PorPagina + Model.Filas.Count;
+}
+
+<div class="mg-encabezado">
+    <div>
+        <h1>Clientes</h1>
+        <p>Registre, consulte y actualice a los deudores de MAGIS-AUTO.</p>
+    </div>
+    <a class="btn btn-primary" asp-action="Crear">
+        <i class="bi bi-person-plus me-1"></i>Nuevo cliente
+    </a>
+</div>
+
+<form method="get" asp-action="Index" class="mg-panel mb-3 no-print">
+    <div class="row g-2 align-items-center">
+        <div class="col-12 col-md">
+            <div class="input-group">
+                <span class="input-group-text"><i class="bi bi-search"></i></span>
+                <input type="search" name="q" value="@Model.Criterio" class="form-control"
+                       placeholder="Buscar clientes..." aria-label="Buscar clientes" />
+            </div>
+        </div>
+        <div class="col-12 col-md-auto d-flex gap-2">
+            <button type="submit" class="btn btn-primary"><i class="bi bi-search me-1"></i>Buscar</button>
+            @if (!string.IsNullOrEmpty(Model.Criterio))
+            {
+                <a class="btn btn-outline-secondary" asp-action="Index">Limpiar</a>
+            }
+        </div>
+    </div>
+</form>
+
+@if (Model.Filas.Count == 0)
+{
+    <div class="mg-vacio">
+        <i class="bi bi-people"></i>
+        <p class="mb-0">
+            @if (!string.IsNullOrEmpty(Model.Criterio))
+            {
+                <text>No se encontraron clientes que coincidan con "@Model.Criterio".</text>
+            }
+            else
+            {
+                <text>Todavía no hay clientes registrados.</text>
+            }
+        </p>
+    </div>
+}
+else
+{
+    <div class="text-muted small mb-2">
+        Mostrando @desde–@hasta de @Model.Total @(Model.Total == 1 ? "cliente" : "clientes")
+        @if (!string.IsNullOrEmpty(Model.Criterio))
+        {
+            <text> para "@Model.Criterio"</text>
+        }
+    </div>
+
+    <div class="table-responsive mg-tabla-contenedor">
+        <table class="table table-hover table-sm align-middle mg-tabla">
+            <thead>
+                <tr>
+                    <th scope="col">Código</th>
+                    <th scope="col">Nombre</th>
+                    <th scope="col">DPI</th>
+                    <th scope="col">NIT</th>
+                    <th scope="col">Correo</th>
+                    <th scope="col">Teléfono</th>
+                    <th scope="col">Nacimiento</th>
+                    <th scope="col" class="text-end no-print">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var fila in Model.Filas)
+                {
+                    var id = fila["CodigoDeudor"];
+                    var nombre = fila["NombreCompleto"];
+                    if (string.IsNullOrWhiteSpace(nombre))
+                    {
+                        nombre = string.Join(" ", new[]
+                        {
+                            fila["PrimerNombre"], fila["SegundoNombre"], fila["PrimerApellido"], fila["SegundoApellido"]
+                        }.Where(p => !string.IsNullOrWhiteSpace(p)));
+                    }
+
+                    <tr>
+                        <td class="text-muted">@id</td>
+                        <td class="fw-semibold">
+                            <a asp-action="Ficha" asp-route-id="@id" class="text-decoration-none">@nombre</a>
+                        </td>
+                        <td class="text-nowrap">@fila["DPI"]</td>
+                        <td class="text-nowrap">@fila["NIT"]</td>
+                        <td>@fila["Correo"]</td>
+                        <td class="text-nowrap">@fila["Telefono"]</td>
+                        <td class="text-nowrap">@fila.Mostrar("FechaNacimiento")</td>
+                        <td class="text-end text-nowrap no-print">
+                            <a asp-action="Ficha" asp-route-id="@id" class="btn btn-sm btn-outline-primary"
+                               title="Ver ficha" aria-label="Ver ficha"><i class="bi bi-eye"></i></a>
+                            <a asp-action="Editar" asp-route-id="@id" class="btn btn-sm btn-outline-secondary"
+                               title="Editar" aria-label="Editar"><i class="bi bi-pencil"></i></a>
+                            <form asp-action="Eliminar" asp-route-id="@id" method="post" class="d-inline"
+                                  data-confirmar="¿Eliminar al cliente @(nombre)? Esta acción no se puede deshacer.">
+                                <button type="submit" class="btn btn-sm btn-outline-danger"
+                                        title="Eliminar" aria-label="Eliminar"><i class="bi bi-trash"></i></button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    @if (Model.Paginas > 1)
+    {
+        <nav class="mt-3 no-print" aria-label="Paginación de clientes">
+            <ul class="pagination pagination-sm justify-content-center flex-wrap mb-0">
+                <li class="page-item @(Model.Pagina == 1 ? "disabled" : "")">
+                    <a class="page-link" asp-action="Index" asp-route-q="@Model.Criterio"
+                       asp-route-pagina="@(Model.Pagina - 1)">Anterior</a>
+                </li>
+                @for (var p = 1; p <= Model.Paginas; p++)
+                {
+                    <li class="page-item @(p == Model.Pagina ? "active" : "")">
+                        <a class="page-link" asp-action="Index" asp-route-q="@Model.Criterio"
+                           asp-route-pagina="@p">@p</a>
+                    </li>
+                }
+                <li class="page-item @(Model.Pagina == Model.Paginas ? "disabled" : "")">
+                    <a class="page-link" asp-action="Index" asp-route-q="@Model.Criterio"
+                       asp-route-pagina="@(Model.Pagina + 1)">Siguiente</a>
+                </li>
+            </ul>
+        </nav>
+    }
+}

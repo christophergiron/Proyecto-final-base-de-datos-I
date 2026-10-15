@@ -4,10 +4,9 @@ using Microsoft.Data.SqlClient;
 
 namespace Magis.Api.Data;
 
-/// <summary>
-/// Unico punto de acceso a la base de datos. Ejecuta procedimientos almacenados con Dapper
-/// y devuelve las filas como diccionarios (nombre de columna -> valor).
-/// </summary>
+// Unico punto de acceso a la base de datos. Ejecuta procedimientos almacenados con Dapper
+// y devuelve las filas como diccionarios (nombre de columna -> valor).
+
 public class SpExecutor
 {
     private readonly string _cadena;
@@ -34,7 +33,7 @@ public class SpExecutor
         return Convertir(filas);
     }
 
-    /// <summary>Consulta de metadatos (nombres de reportes, parametros de un SP). Nunca recibe texto del usuario.</summary>
+    // Consulta de metadatos Nunca recibe texto del usuario
     public async Task<List<Dictionary<string, object?>>> ConsultarAsync(string sql, object? parametros = null)
     {
         await using var cn = new SqlConnection(_cadena);

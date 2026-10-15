@@ -1,11 +1,10 @@
-# Pruebas de la API. En Visual Studio 2022 (17.8 o superior) abra este archivo y presione
-# "Enviar solicitud" sobre cada bloque. Cambie el puerto por el de su proyecto (ver consola al ejecutar).
+# "Enviar solicitud" sobre cada bloque. Cambie el puerto por el de su proyecto
 @host = https://localhost:7136
 
 ### Entidades disponibles
 GET {{host}}/api
 
-### Parametros de una entidad (documentacion automatica)
+### Parametros de una entidad
 GET {{host}}/api/ayuda/cliente
 
 ### Catalogos
@@ -55,16 +54,16 @@ Content-Type: application/json
   "TelefonoCelular": "55566666"
 }
 
-### Vehiculos libres (que aun no respaldan ningun credito)
+### Vehiculos libres 
 GET {{host}}/api/garantia?SoloDisponibles=1
 
-### Simular un credito (no guarda nada)
+### Simular un credito
 GET {{host}}/api/credito/simular?ValorAgencia=150000&Enganche=30000
 
 ### Plan de pagos simulado
 GET {{host}}/api/credito/simular-plan?ValorAgencia=150000&Enganche=30000
 
-### Emitir un credito  (Referencias acepta [1,2,3] o "1,2,3")
+### Emitir un credito 
 POST {{host}}/api/credito
 Content-Type: application/json
 
@@ -85,7 +84,7 @@ GET {{host}}/api/credito/obtener?NumeroCredito=CR-2026-00001
 ### Plan de pagos de un credito, con el estado de cada cuota
 GET {{host}}/api/cuota?NumeroCredito=CR-2026-00001
 
-### Registrar un pago (efectivo no pide referencia; los demas medios si)
+### Registrar un pago
 POST {{host}}/api/pago
 Content-Type: application/json
 
@@ -99,5 +98,5 @@ Content-Type: application/json
 ### Pagos de un credito
 GET {{host}}/api/pago?NumeroCredito=CR-2026-00001
 
-### Reportes disponibles (los agrega el compañero de reportes con sp_Reporte_NN_Nombre)
+### Reportes disponibles 
 GET {{host}}/api/reportes

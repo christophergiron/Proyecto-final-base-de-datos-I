@@ -1,0 +1,83 @@
+@* Plan de cuotas de un crédito con su estado. Columnas que devuelve GET api/cuota?NumeroCredito= ; "Seguros y manejo" suma ManejoCuenta + SeguroAuto + SeguroVida. *@
+@model CuotasVm
+@{
+    decimal Suma(string columna) => Model.Filas.Sum(f => f.Decimal(columna) ?? 0m);
+}
+
+@if (Model.Filas.Count == 0)
+{
+    <div class="mg-vacio">
+        <i class="bi bi-calendar-x"></i>
+        <p class="mb-0">Este crédito no tiene cuotas.</p>
+    </div>
+}
+else
+{
+    <div class="table-responsive mg-tabla-contenedor">
+        <table id="@Model.Id" class="table table-hover table-sm align-middle mg-tabla">
+            <thead>
+                <tr>
+                    <th scope="col">Cuota</th>
+                    <th scope="col">Vencimiento</th>
+                    <th scope="col" class="text-end">Capital</th>
+                    <th scope="col" class="text-end">Interés</th>
+                    <th scope="col" class="text-end">Seguros y manejo</th>
+                    <th scope="col" class="text-end">Total cuota</th>
+                    <th scope="col" class="text-end">Pagado</th>
+                    <th scope="col" class="text-end">Pendiente</th>
+                    <th scope="col" class="text-end">Días de atraso</th>
+                    <th scope="col">Estado</th>
+                    @if (Model.Pagar)
+                    {
+                        <th scope="col" class="text-end no-print">Pago</th>
+                    }
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var f in Model.Filas)
+                {
+                    var estado = f["EstadoCuota"] ?? "";
+                    var cargos = (f.Decimal("ManejoCuenta") ?? 0m) + (f.Decimal("SeguroAuto") ?? 0m) + (f.Decimal("SeguroVida") ?? 0m);
+                    var atraso = f.Entero("DiasAtraso") ?? 0;
+                    var pagada = EstadosCuota.EstaPagada(estado);
+                    var claseFila = EstadosCuota.EstaVencida(estado) ? "table-danger" : "";
+                    var claseEstado = "badge " + EstadosCuota.Clase(estado);
+                    var numeroCuota = f["Cuota"];
+                    <tr class="@claseFila">
+                        <td class="fw-semibold">@f["Cuota"]</td>
+                        <td class="text-nowrap">@f.Mostrar("FechaVencimiento")</td>
+                        <td class="text-end text-nowrap">@Formato.Quetzales(f.Decimal("Capital"))</td>
+                        <td class="text-end text-nowrap">@Formato.Quetzales(f.Decimal("Interes"))</td>
+                        <td class="text-end text-nowrap">@Formato.Quetzales(cargos)</td>
+                        <td class="text-end text-nowrap">@Formato.Quetzales(f.Decimal("TotalCuota"))</td>
+                        <td class="text-end text-nowrap">@Formato.Quetzales(f.Decimal("Pagado"))</td>
+                        <td class="text-end text-nowrap fw-semibold">@Formato.Quetzales(f.Decimal("Pendiente"))</td>
+                        <td class="text-end">@(atraso > 0 ? atraso.ToString() : "—")</td>
+                        <td><span class="@claseEstado">@estado</span></td>
+                        @if (Model.Pagar)
+                        {
+                            <td class="text-end no-print">
+                                @if (!pagada)
+                                {
+                                    <a class="btn btn-sm btn-outline-success" asp-controller="Pagos" asp-action="Registrar"
+                                       asp-route-numero="@Model.Numero" asp-route-cuota="@numeroCuota">
+                                        <i class="bi bi-cash-coin me-1"></i>Pagar
+                                    </a>
+                                }
+                            </td>
+                        }
+                    </tr>
+                }
+            </tbody>
+            <tfoot>
+                <tr class="fw-semibold">
+                    <td colspan="5" class="text-end">Totales</td>
+                    <td class="text-end text-nowrap">@Formato.Quetzales(Suma("TotalCuota"))</td>
+                    <td class="text-end text-nowrap">@Formato.Quetzales(Suma("Pagado"))</td>
+                    <td class="text-end text-nowrap">@Formato.Quetzales(Suma("Pendiente"))</td>
+                    <td colspan="@(Model.Pagar ? 3 : 2)"></td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+}

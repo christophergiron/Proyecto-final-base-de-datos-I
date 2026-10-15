@@ -1,0 +1,40 @@
+@* Campo de formulario generado a partir de un parámetro de la API (GET api/ayuda/{entidad}).
+   El tipo de control sale del tipo SQL: número, fecha, texto o lista desplegable para códigos de otras entidades. *@
+@model CampoVm
+@{
+    var def = Model.Def;
+    var id = Model.Prefijo + def.Nombre;
+    var tieneOpciones = Model.Opciones is not null;
+    var etiqueta = tieneOpciones && def.Nombre.StartsWith("Codigo", StringComparison.OrdinalIgnoreCase) && def.Nombre.Length > 6
+        ? Formato.Encabezado(def.Nombre.Substring(6))
+        : def.Etiqueta;
+    var tipoInput = def.EsEntero ? "number" : def.EsDecimal ? "number" : def.EsFecha ? "date" : def.EsFechaHora ? "datetime-local" : "text";
+    var paso = def.EsEntero ? "1" : def.EsDecimal ? "any" : null;
+    var textoMostrado = Model.Valor;
+    if (tieneOpciones)
+    {
+        textoMostrado = Model.Opciones!.FirstOrDefault(o => o.Valor == Model.Valor)?.Texto ?? Model.Valor;
+    }
+}
+
+<label for="@id" class="form-label">@etiqueta</label>
+
+@if (Model.SoloLectura)
+{
+    <input type="text" class="form-control" id="@id" value="@textoMostrado" readonly />
+    <input type="hidden" name="@id" value="@Model.Valor" />
+}
+else if (tieneOpciones)
+{
+    <select class="form-select" id="@id" name="@id">
+        <option value="">@(Model.Prefijo == "f_" ? "— Todos —" : "— Seleccione —")</option>
+        @foreach (var o in Model.Opciones!)
+        {
+            <option value="@o.Valor" selected="@(o.Valor == Model.Valor)">@o.Texto</option>
+        }
+    </select>
+}
+else
+{
+    <input type="@tipoInput" class="form-control" id="@id" name="@id" value="@Model.Valor" step="@paso" autocomplete="off" />
+}

@@ -1,0 +1,133 @@
+@model CuentaVm
+@{
+    var c = Model.Credito;
+    var numero = c["NumeroCredito"] ?? "";
+    ViewData["Title"] = "Pagos y cuotas · " + numero;
+
+    var estadoTexto = c["EstadoDescripcion"] ?? c["Estado"] ?? "";
+    var pagadas = Model.Cuotas.Count(x => EstadosCuota.EstaPagada(x["EstadoCuota"]));
+    var vencidas = Model.Cuotas.Count(x => EstadosCuota.EstaVencida(x["EstadoCuota"]));
+    var proxima = Model.Cuotas.FirstOrDefault(x => !EstadosCuota.EstaPagada(x["EstadoCuota"]));
+    var tablaCuotas = new CuotasVm { Filas = Model.Cuotas, Numero = numero, Id = "tCuotasCuenta", Pagar = true };
+    var totalPagado = Model.Pagos.Sum(p => p.Decimal("Monto") ?? 0m);
+}
+
+<div class="mg-encabezado">
+    <div>
+        <h1>Pagos y cuotas</h1>
+        <p>
+            Crédito <strong>@numero</strong> · @c["Cliente"]
+            @if (!string.IsNullOrEmpty(estadoTexto))
+            {
+                <span class="badge text-bg-secondary ms-1">@estadoTexto</span>
+            }
+        </p>
+    </div>
+    <div class="d-flex flex-wrap gap-2 no-print">
+        <a class="btn btn-outline-secondary" asp-controller="Creditos" asp-action="Detalle" asp-route-numero="@numero">
+            <i class="bi bi-folder2-open me-1"></i>Ver crédito
+        </a>
+        <button type="button" class="btn btn-outline-secondary" data-imprimir><i class="bi bi-printer me-1"></i>Imprimir</button>
+        <a class="btn btn-success" asp-action="Registrar" asp-route-numero="@numero">
+            <i class="bi bi-cash-coin me-1"></i>Registrar pago
+        </a>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-6 col-lg-3"><div class="mg-sim-dato"><small>Saldo pendiente</small><strong>@Formato.Quetzales(c.Decimal("SaldoPendiente"))</strong></div></div>
+    <div class="col-6 col-lg-3"><div class="mg-sim-dato"><small>Total pagado</small><strong>@Formato.Quetzales(c.Decimal("TotalPagado") ?? totalPagado)</strong></div></div>
+    <div class="col-6 col-lg-3"><div class="mg-sim-dato"><small>Cuotas pagadas</small><strong>@pagadas de @Model.Cuotas.Count</strong><span>@(vencidas > 0 ? vencidas + " vencida(s)" : "Sin cuotas vencidas")</span></div></div>
+    <div class="col-6 col-lg-3">
+        <div class="mg-sim-dato">
+            <small>Próxima cuota</small>
+            @if (proxima is null)
+            {
+                <strong>Crédito al día</strong>
+            }
+            else
+            {
+                <strong>Cuota @proxima["Cuota"]</strong>
+                <span>Vence @proxima.Mostrar("FechaVencimiento") · @Formato.Quetzales(proxima.Decimal("Pendiente"))</span>
+            }
+        </div>
+    </div>
+</div>
+
+<section class="mg-panel mb-4">
+    <h2 class="mg-subtitulo"><i class="bi bi-calendar-check me-2"></i>Cuotas</h2>
+    <partial name="_TablaCuotas" model="tablaCuotas" />
+</section>
+
+<section class="mg-panel mb-4">
+    <h2 class="mg-subtitulo"><i class="bi bi-receipt me-2"></i>Pagos realizados</h2>
+
+    @if (Model.Pagos.Count == 0)
+    {
+        <div class="mg-vacio">
+            <i class="bi bi-receipt"></i>
+            <p class="mb-0">Este crédito todavía no tiene pagos.</p>
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive mg-tabla-contenedor">
+            <table class="table table-hover table-sm align-middle mg-tabla">
+                <thead>
+                    <tr>
+                        <th scope="col">Comprobante</th>
+                        <th scope="col">Cuota</th>
+                        <th scope="col">Fecha</th>
+                        <th scope="col" class="text-end">Monto</th>
+                        <th scope="col">Tipo de pago</th>
+                        <th scope="col">Referencia</th>
+                        <th scope="col" class="text-end no-print">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var p in Model.Pagos)
+                    {
+                        var cuota = p["Cuota"];
+                        var pago = p["NumeroPago"];
+                        var comprobante = string.IsNullOrEmpty(p["NumeroComprobante"]) ? "—" : p["NumeroComprobante"];
+                        <tr>
+                            <td class="text-nowrap fw-semibold">@comprobante</td>
+                            <td>@cuota<span class="text-muted"> · pago @pago</span></td>
+                            <td class="text-nowrap">@p.Mostrar("FechaPago")</td>
+                            <td class="text-end text-nowrap">@Formato.Quetzales(p.Decimal("Monto"))</td>
+                            <td>@p["TipoPago"]</td>
+                            <td>@p["ReferenciaBancaria"]</td>
+                            <td class="text-end text-nowrap no-print">
+                                <a class="btn btn-sm btn-outline-primary" title="Comprobante" aria-label="Comprobante"
+                                   asp-action="Comprobante" asp-route-numero="@numero" asp-route-cuota="@cuota" asp-route-pago="@pago">
+                                    <i class="bi bi-receipt"></i>
+                                </a>
+                                <a class="btn btn-sm btn-outline-secondary" title="Editar" aria-label="Editar"
+                                   asp-action="Editar" asp-route-numero="@numero" asp-route-cuota="@cuota" asp-route-pago="@pago">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <form asp-action="Eliminar" method="post" class="d-inline" data-bloquear
+                                      data-confirmar="¿Eliminar este pago? La cuota y el saldo del crédito se recalcularán.">
+                                    <input type="hidden" name="numero" value="@numero" />
+                                    <input type="hidden" name="cuota" value="@cuota" />
+                                    <input type="hidden" name="pago" value="@pago" />
+                                    <input type="hidden" name="volver" value="cuenta" />
+                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Eliminar" aria-label="Eliminar">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+                <tfoot>
+                    <tr class="fw-semibold">
+                        <td colspan="3" class="text-end">Total pagado</td>
+                        <td class="text-end text-nowrap">@Formato.Quetzales(totalPagado)</td>
+                        <td colspan="3"></td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    }
+</section>

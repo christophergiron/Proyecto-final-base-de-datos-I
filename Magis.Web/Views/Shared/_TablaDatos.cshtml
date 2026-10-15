@@ -1,0 +1,55 @@
+@* Tabla  para cualquier lista que devuelva la API Los encabezados, las fechas (dd/MM/yyyy) y el dinero (Q 1,234.56) se formatean solos. *@
+@using System.Text.Json
+@model TablaModelo
+@{
+    var columnas = Model.ColumnasVisibles();
+    var total = Model.Filas.Count;
+    var textoTotal = total == 1 ? "1 registro" : total + " registros";
+}
+
+@if (total == 0)
+{
+    <div class="mg-vacio">
+        <i class="bi bi-inbox"></i>
+        <p class="mb-0">@Model.Vacio</p>
+    </div>
+}
+else
+{
+    <div class="mg-tabla-barra no-print">
+        @if (Model.Buscador)
+        {
+            <div class="input-group mg-buscador-tabla">
+                <span class="input-group-text"><i class="bi bi-search"></i></span>
+                <input type="search" class="form-control" placeholder="Filtrar en la tabla..."
+                       data-filtro-tabla="#@Model.Id" aria-label="Filtrar en la tabla" />
+            </div>
+        }
+        <span class="text-muted small ms-auto" data-contador-tabla="#@Model.Id">@textoTotal</span>
+    </div>
+
+    <div class="table-responsive mg-tabla-contenedor">
+        <table id="@Model.Id" class="table table-hover table-sm align-middle mg-tabla">
+            <thead>
+                <tr>
+                    @foreach (var columna in columnas)
+                    {
+                        <th scope="col">@Formato.Encabezado(columna)</th>
+                    }
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var fila in Model.Filas)
+                {
+                    <tr>
+                        @foreach (var columna in columnas)
+                        {
+                            var esNumero = fila.Valor(columna)?.ValueKind == JsonValueKind.Number;
+                            <td class="@(esNumero ? "text-end text-nowrap" : "")">@fila.Mostrar(columna)</td>
+                        }
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

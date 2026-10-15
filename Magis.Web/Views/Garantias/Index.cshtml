@@ -1,0 +1,158 @@
+@model ListaVm
+@{
+    ViewData["Title"] = "Garantías";
+
+    var paginador = new PaginadorVm
+    {
+        Pagina = Model.Pagina,
+        Paginas = Model.Paginas,
+        Ruta = new Dictionary<string, object?>
+        {
+            ["q"] = Model.Criterio,
+            ["solo"] = Model.Solo ? "true" : null
+        }
+    };
+}
+
+<div class="mg-encabezado">
+    <div>
+        <h1>Garantías</h1>
+        <p>Vehículos nuevos que respaldan los créditos prendarios.</p>
+    </div>
+    <a class="btn btn-primary" asp-action="Crear">
+        <i class="bi bi-plus-lg me-1"></i>Nuevo vehículo
+    </a>
+</div>
+
+<div class="mg-panel mb-3 no-print">
+    <div class="row g-2 align-items-center">
+        <div class="col-12 col-lg-auto">
+            <div class="btn-group" role="group" aria-label="Filtrar vehículos">
+                <a asp-action="Index" asp-route-q="@Model.Criterio"
+                   class="btn @(Model.Solo ? "btn-outline-primary" : "btn-primary")">Todos</a>
+                <a asp-action="Index" asp-route-q="@Model.Criterio" asp-route-solo="true"
+                   class="btn @(Model.Solo ? "btn-primary" : "btn-outline-primary")">
+                    <i class="bi bi-check2-circle me-1"></i>Disponibles
+                </a>
+            </div>
+        </div>
+        <div class="col-12 col-lg">
+            <form method="get" asp-action="Index">
+                @if (Model.Solo)
+                {
+                    <input type="hidden" name="solo" value="true" />
+                }
+                <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-search"></i></span>
+                    <input type="search" name="q" value="@Model.Criterio" class="form-control"
+                           placeholder="Buscar vehículos..." aria-label="Buscar vehículos" />
+                    <button type="submit" class="btn btn-primary">Buscar</button>
+                    @if (!string.IsNullOrEmpty(Model.Criterio))
+                    {
+                        <a class="btn btn-outline-secondary" asp-action="Index"
+                           asp-route-solo="@(Model.Solo ? "true" : null)">Limpiar</a>
+                    }
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@if (Model.Filas.Count == 0)
+{
+    <div class="mg-vacio">
+        <i class="bi bi-car-front"></i>
+        <p class="mb-0">
+            @if (!string.IsNullOrEmpty(Model.Criterio))
+            {
+                <text>No se encontraron vehículos que coincidan con "@Model.Criterio".</text>
+            }
+            else if (Model.Solo)
+            {
+                <text>No hay vehículos disponibles: todos respaldan un crédito.</text>
+            }
+            else
+            {
+                <text>Todavía no hay vehículos registrados.</text>
+            }
+        </p>
+    </div>
+}
+else
+{
+    <div class="text-muted small mb-2">
+        Mostrando @Model.Desde–@Model.Hasta de @Model.Total @(Model.Total == 1 ? "vehículo" : "vehículos")
+        @(Model.Solo ? "disponibles" : "")
+    </div>
+
+    <div class="table-responsive mg-tabla-contenedor">
+        <table class="table table-hover table-sm align-middle mg-tabla">
+            <thead>
+                <tr>
+                    <th scope="col">Código</th>
+                    <th scope="col">VIN</th>
+                    <th scope="col">Vehículo</th>
+                    <th scope="col">Año</th>
+                    <th scope="col">Placa</th>
+                    <th scope="col" class="text-end">Valor de agencia</th>
+                    <th scope="col" class="text-end">Valor comercial</th>
+                    <th scope="col" class="text-end">Deprec.</th>
+                    <th scope="col">Estado</th>
+                    <th scope="col" class="text-end no-print">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var fila in Model.Filas)
+                {
+                    var id = fila["CodigoGarantia"];
+                    var asignada = fila.Si("Asignada");
+                    var vehiculo = ((fila["Marca"] ?? "") + " " + (fila["Linea"] ?? "")).Trim();
+                    var valorAgencia = fila.Decimal("ValorAgencia") is decimal va ? Formato.Quetzales(va) : "—";
+                    var valorComercial = fila.Decimal("ValorComercial") is decimal vc ? Formato.Quetzales(vc) : "—";
+                    var depreciacion = fila.Decimal("PorcentajeDepreciacion") is decimal dp ? Formato.Porcentaje(dp) : "—";
+
+                    <tr>
+                        <td class="text-muted">@id</td>
+                        <td class="text-nowrap">@fila["VIN"]</td>
+                        <td class="fw-semibold">@vehiculo</td>
+                        <td>@(fila["AnioFabricacion"] ?? "—")</td>
+                        <td class="text-nowrap">@fila["Placa"]</td>
+                        <td class="text-end text-nowrap">@valorAgencia</td>
+                        <td class="text-end text-nowrap">@valorComercial</td>
+                        <td class="text-end text-nowrap">@depreciacion</td>
+                        <td>
+                            @if (asignada)
+                            {
+                                <span class="badge text-bg-secondary">Respalda un crédito</span>
+                            }
+                            else
+                            {
+                                <span class="badge text-bg-success">Disponible</span>
+                            }
+                        </td>
+                        <td class="text-end text-nowrap no-print">
+                            <a asp-action="Editar" asp-route-id="@id" class="btn btn-sm btn-outline-secondary"
+                               title="Editar" aria-label="Editar"><i class="bi bi-pencil"></i></a>
+                            <form asp-action="Eliminar" asp-route-id="@id" method="post" class="d-inline"
+                                  data-confirmar="¿Eliminar el vehículo @(vehiculo) (VIN @(fila["VIN"]))? Esta acción no se puede deshacer.">
+                                @if (asignada)
+                                {
+                                    <button type="button" class="btn btn-sm btn-outline-danger" disabled
+                                            title="Respalda un crédito: no se puede eliminar"
+                                            aria-label="No se puede eliminar"><i class="bi bi-trash"></i></button>
+                                }
+                                else
+                                {
+                                    <button type="submit" class="btn btn-sm btn-outline-danger"
+                                            title="Eliminar" aria-label="Eliminar"><i class="bi bi-trash"></i></button>
+                                }
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <partial name="_Paginador" model="paginador" />
+}

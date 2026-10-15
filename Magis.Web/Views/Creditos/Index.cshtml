@@ -1,0 +1,129 @@
+@model ListaVm
+@using System.Text.Json
+@{
+    ViewData["Title"] = "Créditos";
+
+    var paginador = new PaginadorVm
+    {
+        Pagina = Model.Pagina,
+        Paginas = Model.Paginas,
+        Ruta = new Dictionary<string, object?> { ["q"] = Model.Criterio }
+    };
+
+    // Columnas más útiles, si la API las devuelve; si ninguna coincide se muestran todas
+    var preferidas = new[]
+    {
+        "NumeroCredito", "FechaCredito", "Cliente", "Vehiculo", "Vendedor",
+        "MontoFinanciado", "Plazo", "SaldoPendiente", "EstadoDescripcion"
+    };
+    var primera = Model.Filas.FirstOrDefault();
+    var columnas = primera is null ? new List<string>() : preferidas.Where(primera.Tiene).ToList();
+    if (primera is not null && columnas.Count == 0)
+    {
+        columnas = primera.Columnas.ToList();
+    }
+}
+
+<div class="mg-encabezado">
+    <div>
+        <h1>Créditos</h1>
+        <p>Créditos prendarios emitidos por MAGIS-AUTO.</p>
+    </div>
+    <a class="btn btn-primary" asp-action="Emitir">
+        <i class="bi bi-file-earmark-plus me-1"></i>Emitir crédito
+    </a>
+</div>
+
+<form method="get" asp-action="Index" class="mg-panel mb-3 no-print">
+    <div class="row g-2 align-items-center">
+        <div class="col-12 col-md">
+            <div class="input-group">
+                <span class="input-group-text"><i class="bi bi-search"></i></span>
+                <input type="search" name="q" value="@Model.Criterio" class="form-control"
+                       placeholder="Buscar créditos..." aria-label="Buscar créditos" />
+            </div>
+        </div>
+        <div class="col-12 col-md-auto d-flex gap-2">
+            <button type="submit" class="btn btn-primary"><i class="bi bi-search me-1"></i>Buscar</button>
+            @if (!string.IsNullOrEmpty(Model.Criterio))
+            {
+                <a class="btn btn-outline-secondary" asp-action="Index">Limpiar</a>
+            }
+        </div>
+    </div>
+</form>
+
+@if (Model.Filas.Count == 0)
+{
+    <div class="mg-vacio">
+        <i class="bi bi-file-earmark-text"></i>
+        <p class="mb-0">
+            @if (!string.IsNullOrEmpty(Model.Criterio))
+            {
+                <text>No se encontraron créditos que coincidan con "@Model.Criterio".</text>
+            }
+            else
+            {
+                <text>Todavía no hay créditos emitidos.</text>
+            }
+        </p>
+    </div>
+}
+else
+{
+    <div class="text-muted small mb-2">
+        Mostrando @Model.Desde–@Model.Hasta de @Model.Total @(Model.Total == 1 ? "crédito" : "créditos")
+    </div>
+
+    <div class="table-responsive mg-tabla-contenedor">
+        <table class="table table-hover table-sm align-middle mg-tabla">
+            <thead>
+                <tr>
+                    @foreach (var columna in columnas)
+                    {
+                        <th scope="col">@Formato.Encabezado(columna)</th>
+                    }
+                    <th scope="col" class="text-end no-print">Detalle</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var fila in Model.Filas)
+                {
+                    var numero = fila["NumeroCredito"];
+                    <tr>
+                        @foreach (var columna in columnas)
+                        {
+                            var esNumero = fila.Valor(columna)?.ValueKind == JsonValueKind.Number;
+                            if (columna == "NumeroCredito")
+                            {
+                                <td class="fw-semibold text-nowrap">
+                                    <a asp-action="Detalle" asp-route-numero="@numero" class="text-decoration-none">@numero</a>
+                                </td>
+                            }
+                            else if (columna == "EstadoDescripcion")
+                            {
+                                var texto = fila[columna] ?? "";
+                                <td>
+                                    <span class="badge @(texto.Contains("Activo", StringComparison.OrdinalIgnoreCase) ? "text-bg-success" : "text-bg-secondary")">@texto</span>
+                                </td>
+                            }
+                            else
+                            {
+                                <td class="@(esNumero ? "text-end text-nowrap" : "")">@fila.Mostrar(columna)</td>
+                            }
+                        }
+                        <td class="text-end no-print">
+                            @if (!string.IsNullOrEmpty(numero))
+                            {
+                                <a asp-action="Detalle" asp-route-numero="@numero" class="btn btn-sm btn-outline-primary"
+                                   title="Ver detalle" aria-label="Ver detalle"><i class="bi bi-eye"></i></a>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <partial name="_Paginador" model="paginador" />
+}
