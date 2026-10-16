@@ -1,0 +1,1598 @@
+[
+  {
+    "numero": 1,
+    "procedimiento": "sp_Reporte_01_CreditosPorPeriodo",
+    "titulo": "Créditos emitidos en un período",
+    "razon": "Lista todos los créditos otorgados entre dos fechas (sin contar los anulados), con cliente, vehículo, vendedor, enganche, monto financiado, cuota mensual y total a recaudar. Sirve para medir el volumen de colocación (cuántos créditos y cuánto dinero se prestó) y comparar períodos: permite decidir metas de ventas, campañas y cuánto capital se debe tener disponible para prestar. Si hay muchos créditos solo se muestran los primeros según el máximo de filas; la columna TotalFilasDisponibles indica cuántos cumplen el filtro.",
+    "parametros": [
+      {
+        "nombre": "FechaInicio",
+        "etiqueta": "Fecha inicial",
+        "tipo": "date",
+        "obligatorio": false
+      },
+      {
+        "nombre": "FechaFin",
+        "etiqueta": "Fecha final",
+        "tipo": "date",
+        "obligatorio": false
+      },
+      {
+        "nombre": "MaxFilas",
+        "etiqueta": "Máximo de filas (0 = todas)",
+        "tipo": "int",
+        "obligatorio": false
+      }
+    ],
+    "limitaFilas": true,
+    "columnas": [
+      {
+        "nombre": "NumeroCredito",
+        "formato": "codigo"
+      },
+      {
+        "nombre": "FechaCredito",
+        "formato": "fecha"
+      },
+      {
+        "nombre": "Cliente",
+        "formato": "texto"
+      },
+      {
+        "nombre": "NIT",
+        "formato": "codigo"
+      },
+      {
+        "nombre": "Vehiculo",
+        "formato": "texto"
+      },
+      {
+        "nombre": "Vendedor",
+        "formato": "texto"
+      },
+      {
+        "nombre": "Estado",
+        "formato": "texto"
+      },
+      {
+        "nombre": "ValorAgencia",
+        "formato": "dinero"
+      },
+      {
+        "nombre": "Enganche",
+        "formato": "dinero"
+      },
+      {
+        "nombre": "MontoFinanciado",
+        "formato": "dinero"
+      },
+      {
+        "nombre": "Plazo",
+        "formato": "entero"
+      },
+      {
+        "nombre": "TasaInteres",
+        "formato": "porcentaje"
+      },
+      {
+        "nombre": "CuotaMensual",
+        "formato": "dinero"
+      },
+      {
+        "nombre": "TotalIntereses",
+        "formato": "dinero"
+      },
+      {
+        "nombre": "TotalRecaudable",
+        "formato": "dinero"
+      },
+      {
+        "nombre": "TotalFilasDisponibles",
+        "formato": "oculta"
+      }
+    ]
+  },
+  {
+    "numero": 2,
+    "procedimiento": "sp_Reporte_02_CarteraEnMora",
+    "titulo": "Cartera en mora",
+    "razon": "Muestra los créditos activos que tienen al menos una cuota vencida sin pagar por completo, con los días de atraso de la cuota más antigua, cuántas cuotas están vencidas, el monto vencido y un rango de mora (1 a 30, 31 a 60, 61 a 90 y más de 90 días). Permite priorizar la gestión de cobro: llamar primero a quien lleva más atraso o más dinero vencido, y decidir cuándo escalar a los fiadores o a las referencias. Se puede acotar con días mínimos y máximos de atraso.",
+    "parametros": [
+      {
+        "nombre": "DiasMinimos",
+        "etiqueta": "Días mínimos de atraso",
+        "tipo": "int",
+        "obligatorio": false
+      },
+      {
+        "nombre": "DiasMaximos",
+        "etiqueta": "Días máximos de atraso",
+        "tipo": "int",
+        "obligatorio": false
+      },
+      {
+        "nombre": "MaxFilas",
+        "etiqueta": "Máximo de filas (0 = todas)",
+        "tipo": "int",
+        "obligatorio": false
+      }
+    ],
+    "limitaFilas": true,
+    "columnas": [
+      {
+        "nombre": "NumeroCredito",
+        "formato": "codigo"
+      },
+      {
+        "nombre": "CodigoDeudor",
+        "formato": "codigo"
+      },
+      {
+        "nombre": "Cliente",
+        "formato": "texto"
+      },
+      {
+        "nombre": "Telefono",
+        "formato": "codigo"
+      },
+      {
+        "nombre": "Vendedor",
+        "formato": "texto"
+      },
+      {
+        "nombre": "FechaCredito",
+        "formato": "fecha"
+      },
+      {
+        "nombre": "MontoFinanciado",
+        "formato": "dinero"
+      },
+      {
+        "nombre": "CuotasVencidas",
+        "formato": "entero"
+      },
+      {
+        "nombre": "CuotasConAbono",
+        "formato": "entero"
+      },
+      {
+        "nombre": "PrimerVencimientoImpago",
+        "formato": "fecha"
+      },
+      {
+        "nombre": "DiasAtraso",
+        "formato": "entero"
+      },
+      {
+        "nombre": "RangoMora",
+        "formato": "texto"
+      },
+      {
+        "nombre": "MontoVencido",
+        "formato": "dinero"
+      },
+      {
+        "nombre": "TotalFilasDisponibles",
+        "formato": "oculta"
+      }
+    ]
+  },
+  {
+    "numero": 3,
+    "procedimiento": "sp_Reporte_03_PagosPorTipoPago",
+    "titulo": "Pagos por tipo de pago",
+    "razon": "Resume los pagos recibidos en un período agrupados por medio de pago (efectivo, depósito, ACH, tarjetas), con cantidad, monto total, promedio y porcentaje de cada uno; la posición 1 es el medio más utilizado. Ayuda a decidir qué canales de cobro reforzar, con qué bancos negociar comisiones y qué medios son poco usados y podrían eliminarse.",
+    "parametros": [
+      {
+        "nombre": "FechaInicio",
+        "etiqueta": "Fecha inicial",
+        "tipo": "date",
+        "obligatorio": false
+      },
+      {
+        "nombre": "FechaFin",
+        "etiqueta": "Fecha final",
+        "tipo": "date",
+        "obligatorio": false
+      }
+    ],
+    "limitaFilas": false,
+    "columnas": [
+      {
+        "nombre": "PosicionUso",
+        "formato": "entero"
+      },
+      {
+        "nombre": "CodigoTipoPago",
+        "formato": "codigo"
+      },
+      {
+        "nombre": "MedioDePago",
+        "formato": "texto"
+      },
+      {
+        "nombre": "CantidadPagos",
+        "formato": "entero"
+      },
+      {
+        "nombre": "MontoTotal",
+        "formato": "dinero"
+      },
+      {
+        "nombre": "PromedioPorPago",
+        "formato": "dinero"
+      },
+      {
+        "nombre": "PorcentajeDePagos",
+        "formato": "porcentaje"
+      },
+      {
+        "nombre": "PorcentajeDelMonto",
+        "formato": "porcentaje"
+      }
+    ]
+  },
+  {
+    "numero": 4,
+    "procedimiento": "sp_Reporte_04_VentasPorVendedor",
+    "titulo": "Ventas por vendedor",
+    "razon": "Ranking de vendedores según el monto financiado en el período: cantidad de créditos, monto total, monto promedio y porcentaje del total. La posición 1 es el mejor vendedor. Permite premiar al mejor asesor, apoyar a los de menor desempeño y repartir metas por agencia. Solo aparecen vendedores con ventas en el período y no se cuentan los créditos anulados.",
+    "parametros": [
+      {
+        "nombre": "FechaInicio",
+        "etiqueta": "Fecha inicial",
+        "tipo": "date",
+        "obligatorio": false
+      },
+      {
+        "nombre": "FechaFin",
+        "etiqueta": "Fecha final",
+        "tipo": "date",
+        "obligatorio": false
+      }
+    ],
+    "limitaFilas": false,
+    "columnas": [
+      {
+        "nombre": "Posicion",
+        "formato": "entero"
+      },
+      {
+        "nombre": "CodigoVendedor",
+        "formato": "codigo"
+      },
+      {
+        "nombre": "Vendedor",
+        "formato": "texto"
+      },
+      {
+        "nombre": "Region",
+        "formato": "texto"
+      },
+      {
+        "nombre": "CantidadCreditos",
+        "formato": "entero"
+      },
+      {
+        "nombre": "MontoFinanciado",
+        "formato": "dinero"
+      },
+      {
+        "nombre": "MontoPromedio",
+        "formato": "dinero"
+      },
+      {
+        "nombre": "PorcentajeDelMonto",
+        "formato": "porcentaje"
+      }
+    ]
+  },
+  {
+    "numero": 5,
+    "procedimiento": "sp_Reporte_05_CumpleaniosDelMes",
+    "titulo": "Cumpleañeros del mes",
+    "razon": "Lista a los clientes que cumplen años en el mes elegido (por defecto el mes actual), con edad, correo, teléfono y la carta de felicitación ya redactada y lista para imprimir o enviar. Sirve para fidelizar clientes con un detalle personalizado. Por defecto solo incluye clientes con algún crédito; se puede ampliar a todos los registrados.",
+    "parametros": [
+      {
+        "nombre": "Mes",
+        "etiqueta": "Mes (1 a 12)",
+        "tipo": "int",
+        "obligatorio": false
+      },
+      {
+        "nombre": "SoloConCredito",
+        "etiqueta": "Solo clientes con crédito",
+        "tipo": "boolean",
+        "obligatorio": false
+      },
+      {
+        "nombre": "MaxFilas",
+        "etiqueta": "Máximo de filas (0 = todas)",
+        "tipo": "int",
+        "obligatorio": false
+      }
+    ],
+    "limitaFilas": true,
+    "columnas": [
+      {
+        "nombre": "CodigoDeudor",
+        "formato": "codigo"
+      },
+      {
+        "nombre": "Cliente",
+        "formato": "texto"
+      },
+      {
+        "nombre": "Correo",
+        "formato": "texto"
+      },
+      {
+        "nombre": "Telefono",
+        "formato": "codigo"
+      },
+      {
+        "nombre": "FechaNacimiento",
+        "formato": "fecha"
+      },
+      {
+        "nombre": "DiaCumpleanios",
+        "formato": "entero"
+      },
+      {
+        "nombre": "Edad",
+        "formato": "entero"
+      },
+      {
+        "nombre": "CantidadCreditos",
+        "formato": "entero"
+      },
+      {
+        "nombre": "CartaFelicitacion",
+        "formato": "textolargo"
+      },
+      {
+        "nombre": "TotalFilasDisponibles",
+        "formato": "oculta"
+      }
+    ]
+  },
+  {
+    "numero": 6,
+    "procedimiento": "sp_Reporte_06_EstadoCuentaCliente",
+    "titulo": "Estado de cuenta por cliente",
+    "razon": "Foto completa de un cliente: una fila por cada uno de sus créditos con monto financiado, total a recaudar, lo pagado, el saldo pendiente, el saldo de capital (lo que falta del dinero prestado, sin intereses futuros), cuotas pagadas y vencidas, días de atraso y la próxima cuota por cobrar. Permite atender al cliente que consulta su situación y decidir si ofrecerle un nuevo crédito o gestionar su mora. El detalle cuota por cuota está en el reporte 7.",
+    "parametros": [
+      {
+        "nombre": "CodigoDeudor",
+        "etiqueta": "Código del cliente",
+        "tipo": "int",
+        "obligatorio": true
+      }
+    ],
+    "limitaFilas": false,
+    "columnas": [
+      {
+        "nombre": "CodigoDeudor",
+        "formato": "codigo"
+      },
+      {
+        "nombre": "Cliente",
+        "formato": "texto"
+      },
+      {
+        "nombre": "NIT",
+        "formato": "codigo"
+      },
+      {
+        "nombre": "DPI",
+        "formato": "codigo"
+      },
+      {
+        "nombre": "NumeroCredito",
+        "formato": "codigo"
+      },
+      {
+        "nombre": "FechaCredito",
+        "formato": "fecha"
+      },
+      {
+        "nombre": "Vehiculo",
+        "formato": "texto"
+      },
+      {
+        "nombre": "Estado",
+        "formato": "texto"
+      },
+      {
+        "nombre": "MontoFinanciado",
+        "formato": "dinero"
+      },
+      {
+        "nombre": "Plazo",
+        "formato": "entero"
+      },
+      {
+        "nombre": "TasaInteres",
+        "formato": "porcentaje"
+      },
+      {
+        "nombre": "TotalRecaudable",
+        "formato": "dinero"
+      },
+      {
+        "nombre": "TotalPagado",
+        "formato": "dinero"
+      },
+      {
+        "nombre": "SaldoPendiente",
+        "formato": "dinero"
+      },
+      {
+        "nombre": "SaldoCapital",
+        "formato": "dinero"
+      },
+      {
+        "nombre": "CuotasPagadas",
+        "formato": "entero"
+      },
+      {
+        "nombre": "CuotasVencidas",
+        "formato": "entero"
+      },
+      {
+        "nombre": "MontoVencido",
+        "formato": "dinero"
+      },
+      {
+        "nombre": "DiasAtrasoMax",
+        "formato": "entero"
+      },
+      {
+        "nombre": "ProximaCuota",
+        "formato": "entero"
+      },
+      {
+        "nombre": "ProximoVencimiento",
+        "formato": "fecha"
+      },
+      {
+        "nombre": "MontoProximaCuota",
+        "formato": "dinero"
+      }
+    ]
+  },
+  {
+    "numero": 7,
+    "procedimiento": "sp_Reporte_07_PlanPagosCredito",
+    "titulo": "Plan de pagos por crédito",
+    "razon": "Tabla de amortización completa de un crédito, cuota por cuota: fecha de vencimiento, capital, interés, manejo de cuenta, seguro del auto, seguro de vida, total, lo pagado, lo pendiente, el saldo de capital que queda después de cada cuota, la fecha del último pago y el estado de la cuota. Permite explicarle al cliente cuánto de cada cuota es interés y cuánto reduce de verdad su deuda.",
+    "parametros": [
+      {
+        "nombre": "NumeroCredito",
+        "etiqueta": "Número de crédito",
+        "tipo": "text",
+        "obligatorio": true
+      }
+    ],
+    "limitaFilas": false,
+    "columnas": [
+      {
+        "nombre": "Cuota",
+        "formato": "entero"
+      },
+      {
+        "nombre": "FechaVencimiento",
+        "formato": "fecha"
+      },
+      {
+        "nombre": "Capital",
+        "formato": "dinero"
+      },
+      {
+        "nombre": "Interes",
+        "formato": "dinero"
+      },
+      {
+        "nombre": "ManejoCuenta",
+        "formato": "dinero"
+      },
+      {
+        "nombre": "SeguroAuto",
+        "formato": "dinero"
+      },
+      {
+        "nombre": "SeguroVida",
+        "formato": "dinero"
+      },
+      {
+        "nombre": "TotalCuota",
+        "formato": "dinero"
+      },
+      {
+        "nombre": "Pagado",
+        "formato": "dinero"
+      },
+      {
+        "nombre": "Pendiente",
+        "formato": "dinero"
+      },
+      {
+        "nombre": "SaldoCapitalDespues",
+        "formato": "dinero"
+      },
+      {
+        "nombre": "FechaUltimoPago",
+        "formato": "fechahora"
+      },
+      {
+        "nombre": "DiasAtraso",
+        "formato": "entero"
+      },
+      {
+        "nombre": "EstadoCuota",
+        "formato": "texto"
+      }
+    ]
+  },
+  {
+    "numero": 8,
+    "procedimiento": "sp_Reporte_08_ComisionesPorVendedor",
+    "titulo": "Comisiones por vendedor",
+    "razon": "Calcula la comisión que se debe pagar a cada vendedor: la comisión no se paga por adelantado, sino como el porcentaje pactado en cada crédito multiplicado por el monto de cada pago efectivamente recibido en el período. Muestra créditos con pagos, cantidad de pagos, monto cobrado y comisión ganada, con ranking. Permite liquidar comisiones con exactitud y ver qué vendedores generan más cobranza real y no solo más ventas.",
+    "parametros": [
+      {
+        "nombre": "FechaInicio",
+        "etiqueta": "Fecha inicial",
+        "tipo": "date",
+        "obligatorio": false
+      },
+      {
+        "nombre": "FechaFin",
+        "etiqueta": "Fecha final",
+        "tipo": "date",
+        "obligatorio": false
+      },
+      {
+        "nombre": "CodigoVendedor",
+        "etiqueta": "Código del vendedor",
+        "tipo": "int",
+        "obligatorio": false
+      }
+    ],
+    "limitaFilas": false,
+    "columnas": [
+      {
+        "nombre": "Posicion",
+        "formato": "entero"
+      },
+      {
+        "nombre": "CodigoVendedor",
+        "formato": "codigo"
+      },
+      {
+        "nombre": "Vendedor",
+        "formato": "texto"
+      },
+      {
+        "nombre": "Region",
+        "formato": "texto"
+      },
+      {
+        "nombre": "CreditosConPagos",
+        "formato": "entero"
+      },
+      {
+        "nombre": "CantidadPagos",
+        "formato": "entero"
+      },
+      {
+        "nombre": "MontoCobrado",
+        "formato": "dinero"
+      },
+      {
+        "nombre": "ComisionGanada",
+        "formato": "dinero"
+      },
+      {
+        "nombre": "PorcentajePromedio",
+        "formato": "porcentaje"
+      }
+    ]
+  },
+  {
+    "numero": 9,
+    "procedimiento": "sp_Reporte_09_ProyeccionRecaudacion",
+    "titulo": "Proyección de recaudación mensual",
+    "razon": "Proyecta cuánto dinero debería entrar cada mes por las cuotas que aún no vencen de los créditos activos, separado en capital, interés y cargos/seguros (descuenta los abonos ya hechos). Por defecto cubre los próximos 12 meses desde hoy. Permite planificar el flujo de caja, decidir cuánto se puede prestar y anticipar meses de mayor o menor ingreso. Se puede proyectar un solo crédito.",
+    "parametros": [
+      {
+        "nombre": "FechaInicio",
+        "etiqueta": "Fecha inicial",
+        "tipo": "date",
+        "obligatorio": false
+      },
+      {
+        "nombre": "FechaFin",
+        "etiqueta": "Fecha final",
+        "tipo": "date",
+        "obligatorio": false
+      },
+      {
+        "nombre": "NumeroCredito",
+        "etiqueta": "Número de crédito",
+        "tipo": "text",
+        "obligatorio": false
+      }
+    ],
+    "limitaFilas": false,
+    "columnas": [
+      {
+        "nombre": "Periodo",
+        "formato": "texto"
+      },
+      {
+        "nombre": "Anio",
+        "formato": "codigo"
+      },
+      {
+        "nombre": "Mes",
+        "formato": "entero"
+      },
+      {
+        "nombre": "NombreMes",
+        "formato": "texto"
+      },
+      {
+        "nombre": "CuotasPorCobrar",
+        "formato": "entero"
+      },
+      {
+        "nombre": "CreditosInvolucrados",
+        "formato": "entero"
+      },
+      {
+        "nombre": "CapitalPorCobrar",
+        "formato": "dinero"
+      },
+      {
+        "nombre": "InteresPorCobrar",
+        "formato": "dinero"
+      },
+      {
+        "nombre": "CargosYSegurosPorCobrar",
+        "formato": "dinero"
+      },
+      {
+        "nombre": "TotalProyectado",
+        "formato": "dinero"
+      },
+      {
+        "nombre": "PorcentajeDelTotal",
+        "formato": "porcentaje"
+      }
+    ]
+  },
+  {
+    "numero": 10,
+    "procedimiento": "sp_Reporte_10_InteresesGeneradosVsCobrados",
+    "titulo": "Intereses generados vs cobrados",
+    "razon": "Compara, mes por mes de vencimiento, el interés que ya debió cobrarse (cuotas vencidas) contra la parte que el cliente realmente pagó, con el interés pendiente y el porcentaje cobrado. Los pagos se asignan proporcionalmente dentro de cada cuota. Permite medir la rentabilidad real de la cartera y detectar meses con baja recuperación de intereses.",
+    "parametros": [
+      {
+        "nombre": "FechaInicio",
+        "etiqueta": "Fecha inicial",
+        "tipo": "date",
+        "obligatorio": false
+      },
+      {
+        "nombre": "FechaFin",
+        "etiqueta": "Fecha final",
+        "tipo": "date",
+        "obligatorio": false
+      },
+      {
+        "nombre": "NumeroCredito",
+        "etiqueta": "Número de crédito",
+        "tipo": "text",
+        "obligatorio": false
+      }
+    ],
+    "limitaFilas": false,
+    "columnas": [
+      {
+        "nombre": "Periodo",
+        "formato": "texto"
+      },
+      {
+        "nombre": "Anio",
+        "formato": "codigo"
+      },
+      {
+        "nombre": "Mes",
+        "formato": "entero"
+      },
+      {
+        "nombre": "NombreMes",
+        "formato": "texto"
+      },
+      {
+        "nombre": "CuotasVencidasEnElMes",
+        "formato": "entero"
+      },
+      {
+        "nombre": "InteresGenerado",
+        "formato": "dinero"
+      },
+      {
+        "nombre": "InteresCobrado",
+        "formato": "dinero"
+      },
+      {
+        "nombre": "InteresPendiente",
+        "formato": "dinero"
+      },
+      {
+        "nombre": "PorcentajeCobrado",
+        "formato": "porcentaje"
+      }
+    ]
+  },
+  {
+    "numero": 11,
+    "procedimiento": "sp_Reporte_11_SaldoCapitalPorCredito",
+    "titulo": "Saldo de capital pendiente por crédito",
+    "razon": "Para cada crédito activo muestra el monto financiado, el capital ya recuperado, el saldo de capital pendiente (lo que sigue prestado, sin intereses futuros) y el porcentaje amortizado, ordenado de mayor a menor saldo. Permite conocer la exposición real de la cartera y dónde se concentra el dinero prestado. Se puede filtrar por crédito o por cliente.",
+    "parametros": [
+      {
+        "nombre": "NumeroCredito",
+        "etiqueta": "Número de crédito",
+        "tipo": "text",
+        "obligatorio": false
+      },
+      {
+        "nombre": "CodigoDeudor",
+        "etiqueta": "Código del cliente",
+        "tipo": "int",
+        "obligatorio": false
+      },
+      {
+        "nombre": "MaxFilas",
+        "etiqueta": "Máximo de filas (0 = todas)",
+        "tipo": "int",
+        "obligatorio": false
+      }
+    ],
+    "limitaFilas": true,
+    "columnas": [
+      {
+        "nombre": "NumeroCredito",
+        "formato": "codigo"
+      },
+      {
+        "nombre": "CodigoDeudor",
+        "formato": "codigo"
+      },
+      {
+        "nombre": "Cliente",
+        "formato": "texto"
+      },
+      {
+        "nombre": "FechaCredito",
+        "formato": "fecha"
+      },
+      {
+        "nombre": "Marca",
+        "formato": "texto"
+      },
+      {
+        "nombre": "Vehiculo",
+        "formato": "texto"
+      },
+      {
+        "nombre": "MontoFinanciado",
+        "formato": "dinero"
+      },
+      {
+        "nombre": "CapitalPagado",
+        "formato": "dinero"
+      },
+      {
+        "nombre": "SaldoCapital",
+        "formato": "dinero"
+      },
+      {
+        "nombre": "PorcentajeAmortizado",
+        "formato": "porcentaje"
+      },
+      {
+        "nombre": "TotalFilasDisponibles",
+        "formato": "oculta"
+      }
+    ]
+  },
+  {
+    "numero": 12,
+    "procedimiento": "sp_Reporte_12_CreditosConFiadores",
+    "titulo": "Créditos con fiadores",
+    "razon": "Lista los créditos que tienen fiadores (codeudores) con sus nombres, DPI y teléfonos, junto con la mora del crédito. Permite saber qué créditos tienen respaldo adicional y a quién llamar cuando el cliente se atrasa; con la opción de solo mora se obtiene la lista de créditos con fiador que ya requieren gestión de cobro.",
+    "parametros": [
+      {
+        "nombre": "SoloEnMora",
+        "etiqueta": "Solo créditos en mora",
+        "tipo": "boolean",
+        "obligatorio": false
+      },
+      {
+        "nombre": "CodigoDeudor",
+        "etiqueta": "Código del cliente",
+        "tipo": "int",
+        "obligatorio": false
+      },
+      {
+        "nombre": "MaxFilas",
+        "etiqueta": "Máximo de filas (0 = todas)",
+        "tipo": "int",
+        "obligatorio": false
+      }
+    ],
+    "limitaFilas": true,
+    "columnas": [
+      {
+        "nombre": "NumeroCredito",
+        "formato": "codigo"
+      },
+      {
+        "nombre": "FechaCredito",
+        "formato": "fecha"
+      },
+      {
+        "nombre": "CodigoDeudor",
+        "formato": "codigo"
+      },
+      {
+        "nombre": "Cliente",
+        "formato": "texto"
+      },
+      {
+        "nombre": "TelefonoCliente",
+        "formato": "codigo"
+      },
+      {
+        "nombre": "Estado",
+        "formato": "texto"
+      },
+      {
+        "nombre": "MontoFinanciado",
+        "formato": "dinero"
+      },
+      {
+        "nombre": "CantidadFiadores",
+        "formato": "entero"
+      },
+      {
+        "nombre": "Fiadores",
+        "formato": "textolargo"
+      },
+      {
+        "nombre": "TelefonosFiadores",
+        "formato": "textolargo"
+      },
+      {
+        "nombre": "DiasAtraso",
+        "formato": "entero"
+      },
+      {
+        "nombre": "MontoVencido",
+        "formato": "dinero"
+      },
+      {
+        "nombre": "SaldoPendiente",
+        "formato": "dinero"
+      },
+      {
+        "nombre": "TotalFilasDisponibles",
+        "formato": "oculta"
+      }
+    ]
+  },
+  {
+    "numero": 13,
+    "procedimiento": "sp_Reporte_13_FinanciamientoPorMarca",
+    "titulo": "Financiamiento por marca de vehículo",
+    "razon": "Muestra cuánto dinero se ha financiado por marca (o por marca y línea), con cantidad de créditos, monto, valor de los vehículos, porcentaje de enganche promedio y participación en el total. Permite negociar con las agencias, ver de qué marcas depende la cartera (riesgo de concentración) y qué vehículos prefieren financiar los clientes.",
+    "parametros": [
+      {
+        "nombre": "FechaInicio",
+        "etiqueta": "Fecha inicial",
+        "tipo": "date",
+        "obligatorio": false
+      },
+      {
+        "nombre": "FechaFin",
+        "etiqueta": "Fecha final",
+        "tipo": "date",
+        "obligatorio": false
+      },
+      {
+        "nombre": "CodigoMarca",
+        "etiqueta": "Código de la marca",
+        "tipo": "int",
+        "obligatorio": false
+      },
+      {
+        "nombre": "PorLinea",
+        "etiqueta": "Desglosar por línea (modelo)",
+        "tipo": "boolean",
+        "obligatorio": false
+      }
+    ],
+    "limitaFilas": false,
+    "columnas": [
+      {
+        "nombre": "Posicion",
+        "formato": "entero"
+      },
+      {
+        "nombre": "CodigoMarca",
+        "formato": "codigo"
+      },
+      {
+        "nombre": "Marca",
+        "formato": "texto"
+      },
+      {
+        "nombre": "Linea",
+        "formato": "texto"
+      },
+      {
+        "nombre": "CantidadCreditos",
+        "formato": "entero"
+      },
+      {
+        "nombre": "MontoFinanciado",
+        "formato": "dinero"
+      },
+      {
+        "nombre": "MontoPromedio",
+        "formato": "dinero"
+      },
+      {
+        "nombre": "ValorVehiculos",
+        "formato": "dinero"
+      },
+      {
+        "nombre": "PorcentajeEnganchePromedio",
+        "formato": "porcentaje"
+      },
+      {
+        "nombre": "PorcentajeDelMonto",
+        "formato": "porcentaje"
+      }
+    ]
+  },
+  {
+    "numero": 14,
+    "procedimiento": "sp_Reporte_14_ValorVehiculoVsDeuda",
+    "titulo": "Valor del vehículo vs saldo de la deuda",
+    "razon": "Es el reporte central del proyecto: compara el valor comercial del vehículo (después de la depreciación inmediata del 15 al 20%), su valor estimado hoy (con una depreciación anual configurable, 10% por defecto) y lo que el cliente todavía debe de capital. Emite una alerta cuando la deuda supera el valor del carro. Demuestra que el vehículo se deprecia más rápido de lo que se paga la deuda y permite anticipar pérdidas, pedir garantías adicionales y orientar al cliente. El valor estimado es una proyección, no un dato guardado.",
+    "parametros": [
+      {
+        "nombre": "DepreciacionAnualPct",
+        "etiqueta": "Depreciación anual estimada (%)",
+        "tipo": "decimal",
+        "obligatorio": false
+      },
+      {
+        "nombre": "SoloEnAlerta",
+        "etiqueta": "Solo créditos en alerta",
+        "tipo": "boolean",
+        "obligatorio": false
+      },
+      {
+        "nombre": "NumeroCredito",
+        "etiqueta": "Número de crédito",
+        "tipo": "text",
+        "obligatorio": false
+      },
+      {
+        "nombre": "MaxFilas",
+        "etiqueta": "Máximo de filas (0 = todas)",
+        "tipo": "int",
+        "obligatorio": false
+      }
+    ],
+    "limitaFilas": true,
+    "columnas": [
+      {
+        "nombre": "NumeroCredito",
+        "formato": "codigo"
+      },
+      {
+        "nombre": "Cliente",
+        "formato": "texto"
+      },
+      {
+        "nombre": "Marca",
+        "formato": "texto"
+      },
+      {
+        "nombre": "Vehiculo",
+        "formato": "texto"
+      },
+      {
+        "nombre": "FechaCredito",
+        "formato": "fecha"
+      },
+      {
+        "nombre": "AniosTranscurridos",
+        "formato": "decimal"
+      },
+      {
+        "nombre": "ValorAgencia",
+        "formato": "dinero"
+      },
+      {
+        "nombre": "DepreciacionInmediataPct",
+        "formato": "porcentaje"
+      },
+      {
+        "nombre": "ValorComercialInicial",
+        "formato": "dinero"
+      },
+      {
+        "nombre": "ValorEstimadoHoy",
+        "formato": "dinero"
+      },
+      {
+        "nombre": "MontoFinanciado",
+        "formato": "dinero"
+      },
+      {
+        "nombre": "CapitalPagado",
+        "formato": "dinero"
+      },
+      {
+        "nombre": "SaldoCapital",
+        "formato": "dinero"
+      },
+      {
+        "nombre": "DiferenciaValorMenosDeuda",
+        "formato": "dinero"
+      },
+      {
+        "nombre": "DeudaSobreValorPct",
+        "formato": "porcentaje"
+      },
+      {
+        "nombre": "Alerta",
+        "formato": "texto"
+      },
+      {
+        "nombre": "TotalFilasDisponibles",
+        "formato": "oculta"
+      }
+    ]
+  },
+  {
+    "numero": 15,
+    "procedimiento": "sp_Reporte_15_CreditosPorRegion",
+    "titulo": "Créditos y montos por región o agencia",
+    "razon": "Agrupa los créditos del período por la región o agencia del vendedor que los colocó: cantidad de vendedores, créditos (activos y cancelados), monto financiado, promedio y porcentaje del total. Permite saber qué agencias colocan más, repartir personal, metas y recursos, y detectar regiones con poca presencia.",
+    "parametros": [
+      {
+        "nombre": "FechaInicio",
+        "etiqueta": "Fecha inicial",
+        "tipo": "date",
+        "obligatorio": false
+      },
+      {
+        "nombre": "FechaFin",
+        "etiqueta": "Fecha final",
+        "tipo": "date",
+        "obligatorio": false
+      }
+    ],
+    "limitaFilas": false,
+    "columnas": [
+      {
+        "nombre": "Posicion",
+        "formato": "entero"
+      },
+      {
+        "nombre": "Region",
+        "formato": "texto"
+      },
+      {
+        "nombre": "Vendedores",
+        "formato": "entero"
+      },
+      {
+        "nombre": "CantidadCreditos",
+        "formato": "entero"
+      },
+      {
+        "nombre": "CreditosActivos",
+        "formato": "entero"
+      },
+      {
+        "nombre": "CreditosCancelados",
+        "formato": "entero"
+      },
+      {
+        "nombre": "MontoFinanciado",
+        "formato": "dinero"
+      },
+      {
+        "nombre": "MontoPromedio",
+        "formato": "dinero"
+      },
+      {
+        "nombre": "PorcentajeDelMonto",
+        "formato": "porcentaje"
+      }
+    ]
+  },
+  {
+    "numero": 16,
+    "procedimiento": "sp_Reporte_16_ClientesConVariosCreditos",
+    "titulo": "Clientes con más de un crédito",
+    "razon": "Lista los clientes que tienen dos o más créditos, con cuántos están activos o cancelados, el monto total financiado, el atraso máximo y el saldo pendiente actual. Permite identificar clientes recurrentes (candidatos a ofertas de fidelización) y medir la concentración de riesgo en una sola persona.",
+    "parametros": [
+      {
+        "nombre": "MinimoCreditos",
+        "etiqueta": "Mínimo de créditos por cliente",
+        "tipo": "int",
+        "obligatorio": false
+      },
+      {
+        "nombre": "CodigoDeudor",
+        "etiqueta": "Código del cliente",
+        "tipo": "int",
+        "obligatorio": false
+      },
+      {
+        "nombre": "MaxFilas",
+        "etiqueta": "Máximo de filas (0 = todas)",
+        "tipo": "int",
+        "obligatorio": false
+      }
+    ],
+    "limitaFilas": true,
+    "columnas": [
+      {
+        "nombre": "CodigoDeudor",
+        "formato": "codigo"
+      },
+      {
+        "nombre": "Cliente",
+        "formato": "texto"
+      },
+      {
+        "nombre": "NIT",
+        "formato": "codigo"
+      },
+      {
+        "nombre": "Correo",
+        "formato": "texto"
+      },
+      {
+        "nombre": "Telefono",
+        "formato": "codigo"
+      },
+      {
+        "nombre": "CantidadCreditos",
+        "formato": "entero"
+      },
+      {
+        "nombre": "CreditosActivos",
+        "formato": "entero"
+      },
+      {
+        "nombre": "CreditosCancelados",
+        "formato": "entero"
+      },
+      {
+        "nombre": "MontoTotalFinanciado",
+        "formato": "dinero"
+      },
+      {
+        "nombre": "PrimerCredito",
+        "formato": "fecha"
+      },
+      {
+        "nombre": "UltimoCredito",
+        "formato": "fecha"
+      },
+      {
+        "nombre": "DiasAtrasoMax",
+        "formato": "entero"
+      },
+      {
+        "nombre": "SaldoPendiente",
+        "formato": "dinero"
+      },
+      {
+        "nombre": "TotalFilasDisponibles",
+        "formato": "oculta"
+      }
+    ]
+  },
+  {
+    "numero": 17,
+    "procedimiento": "sp_Reporte_17_CostoCreditoVsContado",
+    "titulo": "Costo total del crédito vs precio de contado",
+    "razon": "Muestra, por crédito, el precio de contado del vehículo, el enganche, el total que el cliente pagará (intereses, manejo de cuenta y seguros), el extra pagado por financiar y su porcentaje, y cuánto habrá pagado por encima del valor comercial del carro. Transparenta el costo real del financiamiento ante el cliente y educa sobre el impacto de la tasa y del plazo; junto con el reporte 14 es la mejor demostración de la idea central del proyecto.",
+    "parametros": [
+      {
+        "nombre": "FechaInicio",
+        "etiqueta": "Fecha inicial",
+        "tipo": "date",
+        "obligatorio": false
+      },
+      {
+        "nombre": "FechaFin",
+        "etiqueta": "Fecha final",
+        "tipo": "date",
+        "obligatorio": false
+      },
+      {
+        "nombre": "NumeroCredito",
+        "etiqueta": "Número de crédito",
+        "tipo": "text",
+        "obligatorio": false
+      },
+      {
+        "nombre": "MaxFilas",
+        "etiqueta": "Máximo de filas (0 = todas)",
+        "tipo": "int",
+        "obligatorio": false
+      }
+    ],
+    "limitaFilas": true,
+    "columnas": [
+      {
+        "nombre": "NumeroCredito",
+        "formato": "codigo"
+      },
+      {
+        "nombre": "FechaCredito",
+        "formato": "fecha"
+      },
+      {
+        "nombre": "Cliente",
+        "formato": "texto"
+      },
+      {
+        "nombre": "Marca",
+        "formato": "texto"
+      },
+      {
+        "nombre": "Vehiculo",
+        "formato": "texto"
+      },
+      {
+        "nombre": "PrecioContado",
+        "formato": "dinero"
+      },
+      {
+        "nombre": "Enganche",
+        "formato": "dinero"
+      },
+      {
+        "nombre": "MontoFinanciado",
+        "formato": "dinero"
+      },
+      {
+        "nombre": "Plazo",
+        "formato": "entero"
+      },
+      {
+        "nombre": "TasaInteres",
+        "formato": "porcentaje"
+      },
+      {
+        "nombre": "TotalIntereses",
+        "formato": "dinero"
+      },
+      {
+        "nombre": "CargosYSeguros",
+        "formato": "dinero"
+      },
+      {
+        "nombre": "TotalRecaudable",
+        "formato": "dinero"
+      },
+      {
+        "nombre": "CostoTotalDelVehiculo",
+        "formato": "dinero"
+      },
+      {
+        "nombre": "ExtraPorFinanciar",
+        "formato": "dinero"
+      },
+      {
+        "nombre": "ExtraPorcentaje",
+        "formato": "porcentaje"
+      },
+      {
+        "nombre": "ValorComercialInicial",
+        "formato": "dinero"
+      },
+      {
+        "nombre": "CostoMenosValorComercial",
+        "formato": "dinero"
+      },
+      {
+        "nombre": "TotalFilasDisponibles",
+        "formato": "oculta"
+      }
+    ]
+  },
+  {
+    "numero": 18,
+    "procedimiento": "sp_Reporte_18_CuotasConAbonosParciales",
+    "titulo": "Cuotas pagadas con abonos parciales",
+    "razon": "Lista las cuotas que ningún pago individual cubrió por completo: pagadas en varios abonos o con un abono menor al total. Muestra cuántos abonos, cuánto se pagó, cuánto falta, los días entre el primer y el último abono y si la cuota quedó liquidada o falta completarla. Es una señal temprana de dificultad de pago y permite ofrecer reestructuración o reforzar el cobro antes de que el cliente caiga en mora.",
+    "parametros": [
+      {
+        "nombre": "FechaInicio",
+        "etiqueta": "Fecha inicial",
+        "tipo": "date",
+        "obligatorio": false
+      },
+      {
+        "nombre": "FechaFin",
+        "etiqueta": "Fecha final",
+        "tipo": "date",
+        "obligatorio": false
+      },
+      {
+        "nombre": "NumeroCredito",
+        "etiqueta": "Número de crédito",
+        "tipo": "text",
+        "obligatorio": false
+      },
+      {
+        "nombre": "MaxFilas",
+        "etiqueta": "Máximo de filas (0 = todas)",
+        "tipo": "int",
+        "obligatorio": false
+      }
+    ],
+    "limitaFilas": true,
+    "columnas": [
+      {
+        "nombre": "NumeroCredito",
+        "formato": "codigo"
+      },
+      {
+        "nombre": "Cuota",
+        "formato": "entero"
+      },
+      {
+        "nombre": "CodigoDeudor",
+        "formato": "codigo"
+      },
+      {
+        "nombre": "Cliente",
+        "formato": "texto"
+      },
+      {
+        "nombre": "FechaVencimiento",
+        "formato": "fecha"
+      },
+      {
+        "nombre": "TotalCuota",
+        "formato": "dinero"
+      },
+      {
+        "nombre": "Pagado",
+        "formato": "dinero"
+      },
+      {
+        "nombre": "Pendiente",
+        "formato": "dinero"
+      },
+      {
+        "nombre": "PorcentajePagado",
+        "formato": "porcentaje"
+      },
+      {
+        "nombre": "CantidadAbonos",
+        "formato": "entero"
+      },
+      {
+        "nombre": "PrimerAbono",
+        "formato": "fechahora"
+      },
+      {
+        "nombre": "UltimoAbono",
+        "formato": "fechahora"
+      },
+      {
+        "nombre": "DiasEntreAbonos",
+        "formato": "entero"
+      },
+      {
+        "nombre": "Situacion",
+        "formato": "texto"
+      },
+      {
+        "nombre": "TotalFilasDisponibles",
+        "formato": "oculta"
+      }
+    ]
+  },
+  {
+    "numero": 19,
+    "procedimiento": "sp_Reporte_19_PagosTardios",
+    "titulo": "Pagos realizados después de la fecha de vencimiento",
+    "razon": "Lista los pagos hechos después del día de vencimiento de su cuota, con los días de retraso, el monto, el medio de pago y el comprobante. Mide la puntualidad real de los clientes aunque hoy no estén en mora, y permite identificar pagadores tardíos, evaluar cargos por mora y anticipar riesgo.",
+    "parametros": [
+      {
+        "nombre": "FechaInicio",
+        "etiqueta": "Fecha inicial",
+        "tipo": "date",
+        "obligatorio": false
+      },
+      {
+        "nombre": "FechaFin",
+        "etiqueta": "Fecha final",
+        "tipo": "date",
+        "obligatorio": false
+      },
+      {
+        "nombre": "DiasMinimos",
+        "etiqueta": "Días mínimos de atraso",
+        "tipo": "int",
+        "obligatorio": false
+      },
+      {
+        "nombre": "NumeroCredito",
+        "etiqueta": "Número de crédito",
+        "tipo": "text",
+        "obligatorio": false
+      },
+      {
+        "nombre": "MaxFilas",
+        "etiqueta": "Máximo de filas (0 = todas)",
+        "tipo": "int",
+        "obligatorio": false
+      }
+    ],
+    "limitaFilas": true,
+    "columnas": [
+      {
+        "nombre": "NumeroCredito",
+        "formato": "codigo"
+      },
+      {
+        "nombre": "Cuota",
+        "formato": "entero"
+      },
+      {
+        "nombre": "NumeroComprobante",
+        "formato": "codigo"
+      },
+      {
+        "nombre": "CodigoDeudor",
+        "formato": "codigo"
+      },
+      {
+        "nombre": "Cliente",
+        "formato": "texto"
+      },
+      {
+        "nombre": "FechaVencimiento",
+        "formato": "fecha"
+      },
+      {
+        "nombre": "FechaPago",
+        "formato": "fechahora"
+      },
+      {
+        "nombre": "DiasTarde",
+        "formato": "entero"
+      },
+      {
+        "nombre": "Monto",
+        "formato": "dinero"
+      },
+      {
+        "nombre": "MedioDePago",
+        "formato": "texto"
+      },
+      {
+        "nombre": "TotalFilasDisponibles",
+        "formato": "oculta"
+      }
+    ]
+  },
+  {
+    "numero": 20,
+    "procedimiento": "sp_Reporte_20_ReferenciasClientesEnMora",
+    "titulo": "Referencias de los clientes en mora",
+    "razon": "Para cada crédito activo en mora muestra sus referencias personales (nombre, parentesco, lugar de trabajo y todos sus teléfonos) junto con los datos del cliente y de la deuda: días de atraso, cuotas vencidas y monto vencido. Es la lista de trabajo del departamento de cobros para localizar al cliente cuando no responde. El máximo de filas limita el número de créditos, no de filas.",
+    "parametros": [
+      {
+        "nombre": "DiasMinimos",
+        "etiqueta": "Días mínimos de atraso",
+        "tipo": "int",
+        "obligatorio": false
+      },
+      {
+        "nombre": "CodigoDeudor",
+        "etiqueta": "Código del cliente",
+        "tipo": "int",
+        "obligatorio": false
+      },
+      {
+        "nombre": "NumeroCredito",
+        "etiqueta": "Número de crédito",
+        "tipo": "text",
+        "obligatorio": false
+      },
+      {
+        "nombre": "MaxFilas",
+        "etiqueta": "Máximo de filas (0 = todas)",
+        "tipo": "int",
+        "obligatorio": false
+      }
+    ],
+    "limitaFilas": true,
+    "columnas": [
+      {
+        "nombre": "NumeroCredito",
+        "formato": "codigo"
+      },
+      {
+        "nombre": "CodigoDeudor",
+        "formato": "codigo"
+      },
+      {
+        "nombre": "Cliente",
+        "formato": "texto"
+      },
+      {
+        "nombre": "TelefonoCliente",
+        "formato": "codigo"
+      },
+      {
+        "nombre": "DiasAtraso",
+        "formato": "entero"
+      },
+      {
+        "nombre": "CuotasVencidas",
+        "formato": "entero"
+      },
+      {
+        "nombre": "MontoVencido",
+        "formato": "dinero"
+      },
+      {
+        "nombre": "CodigoReferencia",
+        "formato": "codigo"
+      },
+      {
+        "nombre": "Referencia",
+        "formato": "texto"
+      },
+      {
+        "nombre": "Parentesco",
+        "formato": "texto"
+      },
+      {
+        "nombre": "LugarTrabajo",
+        "formato": "texto"
+      },
+      {
+        "nombre": "TelefonosReferencia",
+        "formato": "textolargo"
+      },
+      {
+        "nombre": "TotalFilasDisponibles",
+        "formato": "oculta"
+      }
+    ]
+  }
+]
