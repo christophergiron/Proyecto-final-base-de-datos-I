@@ -1,0 +1,81 @@
+@* Control del formulario de un reporte, según el tipo y el nombre del parámetro. *@
+@model CampoReporteVm
+@{
+    var p = Model.Param;
+    var id = "p_" + p.Nombre;
+    var requerido = p.Obligatorio;
+}
+
+<label for="@id" class="form-label">
+    @p.Etiqueta
+    @if (requerido)
+    {
+        <span class="text-danger">*</span>
+    }
+</label>
+
+@switch (p.Control)
+{
+    case "fecha":
+        <input type="date" class="form-control" id="@id" name="@id" value="@Model.Valor" required="@requerido" />
+        break;
+
+    case "mes":
+        <select class="form-select" id="@id" name="@id" required="@requerido">
+            <option value="">@(requerido ? "— Seleccione —" : "Mes actual")</option>
+            @for (var m = 1; m <= 12; m++)
+            {
+                var valorMes = m.ToString();
+                <option value="@valorMes" selected="@(valorMes == Model.Valor)">@ReportesFormato.Meses[m - 1]</option>
+            }
+        </select>
+        break;
+
+    case "booleano":
+        <select class="form-select" id="@id" name="@id">
+            <option value="">Por defecto</option>
+            <option value="1" selected="@(Model.Valor == "1")">Sí</option>
+            <option value="0" selected="@(Model.Valor == "0")">No</option>
+        </select>
+        break;
+
+    case "cliente":
+    case "credito":
+        var idLista = "lista_" + p.Nombre;
+        var ayudaTexto = p.Control == "cliente" ? "Escriba el nombre o DPI y elija de la lista" : "Escriba el número o el cliente y elija de la lista";
+        <input type="text" class="form-control" id="@id" name="@id" value="@Model.Valor" list="@idLista"
+               placeholder="@ayudaTexto" autocomplete="off" required="@requerido" />
+        <datalist id="@idLista">
+            @foreach (var o in Model.Opciones)
+            {
+                <option value="@o.Texto"></option>
+            }
+        </datalist>
+        break;
+
+    case "vendedor":
+    case "marca":
+        <select class="form-select" id="@id" name="@id" required="@requerido">
+            <option value="">@(requerido ? "— Seleccione —" : "— Todos —")</option>
+            @foreach (var o in Model.Opciones)
+            {
+                <option value="@o.Valor" selected="@(o.Valor == Model.Valor)">@o.Texto</option>
+            }
+        </select>
+        break;
+
+    case "entero":
+        var textoEntero = p.Nombre == "MaxFilas" ? "Por defecto" : "";
+        <input type="number" class="form-control" id="@id" name="@id" value="@Model.Valor" step="1" min="0"
+               inputmode="numeric" placeholder="@textoEntero" required="@requerido" />
+        break;
+
+    case "decimal":
+        <input type="number" class="form-control" id="@id" name="@id" value="@Model.Valor" step="any" min="0"
+               inputmode="decimal" required="@requerido" />
+        break;
+
+    default:
+        <input type="text" class="form-control" id="@id" name="@id" value="@Model.Valor" autocomplete="off" required="@requerido" />
+        break;
+}

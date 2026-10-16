@@ -1,0 +1,49 @@
+@model CartasVm
+@{
+    ViewData["Title"] = "Cartas de felicitación";
+    var total = Model.Clientes.Count;
+}
+
+@section Estilos {
+    <style media="print">
+        @@page { size: portrait; margin: 18mm; }
+        .mg-cabecera-impresion { display: none !important; }
+    </style>
+}
+
+<div class="mg-encabezado no-print">
+    <div>
+        <h1>Cartas de felicitación</h1>
+        <p>@total @(total == 1 ? "carta lista" : "cartas listas") para imprimir. Cada carta sale en su propia hoja.</p>
+    </div>
+    <div class="d-flex flex-wrap gap-2">
+        <a class="btn btn-outline-secondary" asp-action="Ver" asp-route-numero="5"><i class="bi bi-arrow-left me-1"></i>Volver al reporte</a>
+        <button type="button" class="btn btn-primary" data-imprimir><i class="bi bi-printer me-1"></i>Imprimir</button>
+    </div>
+</div>
+
+@foreach (var cliente in Model.Clientes)
+{
+    var nombre = cliente["Cliente"] ?? "";
+    var texto = cliente["CartaFelicitacion"];
+    if (string.IsNullOrWhiteSpace(texto))
+    {
+        texto = "Estimado(a) " + nombre + ":\n\n" +
+                "En MAGIS-AUTO queremos felicitarle de todo corazón en el día de su cumpleaños. " +
+                "Gracias por confiar en nosotros para hacer realidad la compra de su vehículo.\n\n" +
+                "Le deseamos un año lleno de salud, éxitos y buenos kilómetros.\n\n" +
+                "Atentamente,\nMAGIS-AUTO";
+    }
+    <article class="mg-carta">
+        <header class="mg-carta-membrete">
+            <img src="~/img/logo.png" alt="MAGIS-AUTO Crédito Financiero Automotriz" />
+            <div class="text-end">
+                <strong>MAGIS-AUTO, S.A.</strong><br />
+                Crédito Financiero Automotriz<br />
+                Guatemala, @Model.FechaTexto
+            </div>
+        </header>
+        <div class="mg-carta-cuerpo">@texto</div>
+        <footer class="mg-carta-pie">MAGIS-AUTO · Crédito Financiero Automotriz · Guatemala</footer>
+    </article>
+}

@@ -1,0 +1,98 @@
+@model EstadoCuentaVm
+@{
+    var primero = Model.Creditos[0];
+    ViewData["Title"] = "Estado de cuenta · " + primero["Cliente"];
+
+    decimal Suma(string columna) => Model.Creditos.Sum(f => f.Decimal(columna) ?? 0m);
+    string Fecha(Fila f, string columna) => ReportesFormato.Celda(f, columna, "fecha");
+}
+
+@section Estilos {
+    <style media="print">
+        @@page { size: portrait; margin: 14mm; }
+    </style>
+}
+
+<div class="mg-encabezado">
+    <div>
+        <div class="text-muted small mb-1">Reporte 6</div>
+        <h1>Estado de cuenta</h1>
+        <p>Emitido el @Formato.Fecha(DateTime.Now)</p>
+    </div>
+    <div class="d-flex flex-wrap gap-2 no-print">
+        <a class="btn btn-outline-secondary" asp-action="Ver" asp-route-numero="6"><i class="bi bi-arrow-left me-1"></i>Volver al reporte</a>
+        <button type="button" class="btn btn-primary" data-imprimir><i class="bi bi-printer me-1"></i>Imprimir</button>
+    </div>
+</div>
+
+<section class="mg-panel mb-3">
+    <h2 class="mg-subtitulo">Cliente</h2>
+    <dl class="row mg-datos mb-0">
+        <dt class="col-sm-3 col-xl-2">Nombre</dt>
+        <dd class="col-sm-9 col-xl-4">@primero["Cliente"]</dd>
+        <dt class="col-sm-3 col-xl-2">Código</dt>
+        <dd class="col-sm-9 col-xl-4">@primero["CodigoDeudor"]</dd>
+        <dt class="col-sm-3 col-xl-2">DPI</dt>
+        <dd class="col-sm-9 col-xl-4">@primero["DPI"]</dd>
+        <dt class="col-sm-3 col-xl-2">NIT</dt>
+        <dd class="col-sm-9 col-xl-4">@primero["NIT"]</dd>
+    </dl>
+</section>
+
+<div class="row g-3 mb-4">
+    <div class="col-6 col-lg"><div class="mg-sim-dato"><small>Créditos</small><strong>@Model.Creditos.Count</strong></div></div>
+    <div class="col-6 col-lg"><div class="mg-sim-dato"><small>Monto financiado</small><strong>@Formato.Quetzales(Suma("MontoFinanciado"))</strong></div></div>
+    <div class="col-6 col-lg"><div class="mg-sim-dato"><small>Total pagado</small><strong>@Formato.Quetzales(Suma("TotalPagado"))</strong></div></div>
+    <div class="col-6 col-lg"><div class="mg-sim-dato"><small>Saldo pendiente</small><strong>@Formato.Quetzales(Suma("SaldoPendiente"))</strong></div></div>
+    <div class="col-12 col-lg"><div class="mg-sim-dato"><small>Monto vencido</small><strong>@Formato.Quetzales(Suma("MontoVencido"))</strong></div></div>
+</div>
+
+@foreach (var c in Model.Creditos)
+{
+    var numero = c["NumeroCredito"];
+    var estado = c["Estado"] ?? "";
+    var claseEstado = "badge " + (estado.Contains("Activo", StringComparison.OrdinalIgnoreCase) ? "text-bg-success" : "text-bg-secondary");
+    var vencidas = c.Entero("CuotasVencidas") ?? 0;
+    var proxima = c.Entero("ProximaCuota");
+    var textoProxima = proxima.HasValue
+        ? "Cuota " + proxima + " · " + Fecha(c, "ProximoVencimiento") + " · " + Formato.Quetzales(c.Decimal("MontoProximaCuota"))
+        : "Sin cuotas pendientes";
+    var datos = new List<(string Etiqueta, string Valor)>
+    {
+        ("Fecha del crédito", Fecha(c, "FechaCredito")),
+        ("Monto financiado", Formato.Quetzales(c.Decimal("MontoFinanciado"))),
+        ("Plazo", c["Plazo"] + " meses"),
+        ("Tasa de interés", Formato.Porcentaje(c.Decimal("TasaInteres"))),
+        ("Total a recaudar", Formato.Quetzales(c.Decimal("TotalRecaudable"))),
+        ("Total pagado", Formato.Quetzales(c.Decimal("TotalPagado"))),
+        ("Saldo pendiente", Formato.Quetzales(c.Decimal("SaldoPendiente"))),
+        ("Saldo de capital", Formato.Quetzales(c.Decimal("SaldoCapital"))),
+        ("Cuotas pagadas", c["CuotasPagadas"] + " de " + c["Plazo"]),
+        ("Cuotas vencidas", vencidas + (vencidas > 0 ? " · " + Formato.Quetzales(c.Decimal("MontoVencido")) : "")),
+        ("Días de atraso (máx.)", c["DiasAtrasoMax"] ?? "0"),
+        ("Próxima cuota", textoProxima)
+    };
+    var rutaPlan = new Dictionary<string, string> { ["p_NumeroCredito"] = numero ?? "" };
+
+    <section class="mg-estado-credito mb-3">
+        <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-2">
+            <div>
+                <h2 class="h5 mb-0">Crédito @numero <span class="@claseEstado">@estado</span></h2>
+                <div class="text-muted">@c["Vehiculo"]</div>
+            </div>
+            <a class="btn btn-sm btn-outline-primary no-print" asp-action="PlanPagos" asp-all-route-data="rutaPlan">
+                <i class="bi bi-table me-1"></i>Plan de pagos
+            </a>
+        </div>
+        <div class="mg-estado-grid">
+            @foreach (var (etiqueta, valor) in datos)
+            {
+                <div class="mg-dato"><small>@etiqueta</small><strong>@valor</strong></div>
+            }
+        </div>
+    </section>
+}
+
+<p class="text-muted small mt-4">
+    Documento informativo generado por MAGIS-AUTO el @Formato.FechaHora(DateTime.Now). El detalle cuota por cuota está en el plan de pagos de cada crédito.
+</p>

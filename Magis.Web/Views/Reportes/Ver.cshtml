@@ -1,0 +1,163 @@
+@model ReporteVm
+@{
+    var def = Model.Def;
+    ViewData["Title"] = def.Titulo;
+
+    var tabla = new TablaReporteVm
+    {
+        Id = "tReporte",
+        Filas = Model.Filas,
+        Columnas = Model.Columnas,
+        AccionFila = def.Numero == 5 ? "carta" : def.Numero == 6 ? "plan" : "",
+        RutaParams = new Dictionary<string, string>
+        {
+            ["p_Mes"] = Model.Valores.GetValueOrDefault("Mes") ?? "",
+            ["p_SoloConCredito"] = Model.Valores.GetValueOrDefault("SoloConCredito") ?? ""
+        }
+    };
+    var rutaParams = Model.Valores.ToDictionary(v => "p_" + v.Key, v => v.Value);
+    var rutaExportar = new Dictionary<string, string>(rutaParams) { ["numero"] = def.Numero.ToString(), ["ejecutar"] = "1" };
+
+    var filasMostradas = Model.Filas.Count;
+    var recortado = Model.TotalDisponible.HasValue && Model.TotalDisponible.Value > filasMostradas;
+}
+
+@section Estilos {
+    <style media="print">
+        @@page { size: landscape; margin: 10mm; }
+    </style>
+}
+
+<div class="mg-encabezado">
+    <div>
+        <div class="text-muted small mb-1">Reporte @def.Numero</div>
+        <h1>@def.Titulo</h1>
+    </div>
+    <a class="btn btn-outline-secondary no-print" asp-action="Index"><i class="bi bi-arrow-left me-1"></i>Todos los reportes</a>
+</div>
+
+@if (!string.IsNullOrWhiteSpace(def.Razon))
+{
+    <section class="mg-razon mb-3">
+        <div class="mg-razon-titulo"><i class="bi bi-lightbulb me-1"></i>¿Para qué sirve este reporte?</div>
+        <p class="mb-0">@def.Razon</p>
+    </section>
+}
+
+@if (def.Parametros.Count > 0)
+{
+    <form method="get" asp-action="Ver" class="mg-panel mb-3 no-print">
+        <input type="hidden" name="numero" value="@def.Numero" />
+        <input type="hidden" name="ejecutar" value="1" />
+        <h2 class="mg-subtitulo"><i class="bi bi-funnel me-2"></i>Filtros</h2>
+        <div class="row g-3 align-items-end">
+            @foreach (var p in def.Parametros)
+            {
+                var campo = new CampoReporteVm
+                {
+                    Param = p,
+                    Valor = Model.Valores.GetValueOrDefault(p.Nombre),
+                    Opciones = Model.Opciones.GetValueOrDefault(p.Nombre) ?? new List<Opcion>()
+                };
+                <div class="col-12 col-md-6 col-xl-4">
+                    <partial name="_CampoReporte" model="campo" />
+                </div>
+            }
+            <div class="col-12 col-xl-auto d-flex gap-2">
+                <button type="submit" class="btn btn-primary"><i class="bi bi-play-fill me-1"></i>Consultar</button>
+                <a class="btn btn-outline-secondary" asp-action="Ver" asp-route-numero="@def.Numero">Limpiar</a>
+            </div>
+        </div>
+    </form>
+}
+
+@if (Model.Ejecutado)
+{
+    <div class="solo-impresion mb-2">
+        <h2 class="h4 mb-1">@def.Titulo</h2>
+        <div class="text-muted">@Model.Resumen</div>
+    </div>
+
+    <div class="d-flex flex-wrap align-items-center gap-2 mb-2 no-print">
+        <span class="text-muted small me-auto">
+            @if (filasMostradas == 0)
+            {
+                <text>Sin resultados</text>
+            }
+            else
+            {
+                <text>@filasMostradas @(filasMostradas == 1 ? "fila" : "filas")</text>
+            }
+            · @Model.Resumen
+        </span>
+
+        @if (def.Numero == 5 && filasMostradas > 0)
+        {
+            var rutaTodas = new Dictionary<string, string>
+            {
+                ["p_Mes"] = Model.Valores.GetValueOrDefault("Mes") ?? "",
+                ["p_SoloConCredito"] = Model.Valores.GetValueOrDefault("SoloConCredito") ?? ""
+            };
+            <a class="btn btn-primary btn-sm" asp-action="Cartas" asp-all-route-data="rutaTodas">
+                <i class="bi bi-envelope-heart me-1"></i>Imprimir todas las cartas
+            </a>
+        }
+        @if (def.Numero == 6 && filasMostradas > 0)
+        {
+            var rutaEstado = new Dictionary<string, string> { ["p_CodigoDeudor"] = Model.Valores.GetValueOrDefault("CodigoDeudor") ?? "" };
+            <a class="btn btn-primary btn-sm" asp-action="EstadoCuenta" asp-all-route-data="rutaEstado">
+                <i class="bi bi-file-earmark-text me-1"></i>Estado de cuenta imprimible
+            </a>
+        }
+        @if (def.Numero == 7 && filasMostradas > 0)
+        {
+            var rutaPlan = new Dictionary<string, string> { ["p_NumeroCredito"] = Model.Valores.GetValueOrDefault("NumeroCredito") ?? "" };
+            <a class="btn btn-primary btn-sm" asp-action="PlanPagos" asp-all-route-data="rutaPlan">
+                <i class="bi bi-file-earmark-text me-1"></i>Plan de pagos imprimible
+            </a>
+        }
+        @if (filasMostradas > 0)
+        {
+            <a class="btn btn-outline-secondary btn-sm" asp-action="Exportar" asp-all-route-data="rutaExportar">
+                <i class="bi bi-file-earmark-spreadsheet me-1"></i>Exportar a Excel (CSV)
+            </a>
+        }
+        <button type="button" class="btn btn-outline-secondary btn-sm" data-imprimir><i class="bi bi-printer me-1"></i>Imprimir</button>
+    </div>
+
+    @if (recortado)
+    {
+        <div class="alert alert-warning py-2 no-print">
+            Se muestran las primeras @filasMostradas filas de @Model.TotalDisponible. Para ver más, aumente el
+            <strong>máximo de filas</strong> (0 = todas) o afine los filtros.
+        </div>
+    }
+
+    @if (filasMostradas > 10)
+    {
+        <div class="input-group mb-2 mg-buscador-tabla no-print">
+            <span class="input-group-text"><i class="bi bi-search"></i></span>
+            <input type="search" class="form-control" placeholder="Filtrar en el resultado..."
+                   data-filtro-tabla="#tReporte" aria-label="Filtrar en el resultado" />
+        </div>
+    }
+
+    @if (filasMostradas == 0)
+    {
+        <div class="mg-vacio">
+            <i class="bi bi-inbox"></i>
+            <p class="mb-0">El reporte no devolvió filas con esos filtros.</p>
+        </div>
+    }
+    else
+    {
+        <partial name="_TablaReporte" model="tabla" />
+    }
+}
+else if (def.Parametros.Any(p => p.Obligatorio))
+{
+    <div class="mg-vacio no-print">
+        <i class="bi bi-funnel"></i>
+        <p class="mb-0">Complete los filtros obligatorios y pulse <strong>Consultar</strong>.</p>
+    </div>
+}

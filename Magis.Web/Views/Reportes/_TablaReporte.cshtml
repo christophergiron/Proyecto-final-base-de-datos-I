@@ -1,0 +1,96 @@
+@* Tabla de resultados de un reporte: formato por columna (dinero, fecha, porcentaje). *@
+@model TablaReporteVm
+@{
+    decimal Suma(string columna) => Model.Filas.Sum(f => f.Decimal(columna) ?? 0m);
+}
+
+<div class="table-responsive mg-tabla-contenedor">
+    <table id="@Model.Id" class="table table-hover table-sm align-middle mg-tabla">
+        <thead>
+            <tr>
+                @foreach (var col in Model.Columnas)
+                {
+                    var claseTh = ReportesFormato.EsNumerico(col.Formato) ? "text-end" : "";
+                    <th scope="col" class="@claseTh">@Formato.Encabezado(col.Nombre)</th>
+                }
+                @if (Model.AccionFila != "")
+                {
+                    <th scope="col" class="text-end no-print">Vista imprimible</th>
+                }
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var fila in Model.Filas)
+            {
+                <tr>
+                    @foreach (var col in Model.Columnas)
+                    {
+                        var texto = ReportesFormato.Celda(fila, col.Nombre, col.Formato);
+                        var completo = texto;
+                        if (col.Formato == "textolargo" && texto.Length > 60)
+                        {
+                            texto = texto.Substring(0, 60).TrimEnd() + "…";
+                        }
+                        var claseTd = ReportesFormato.EsNumerico(col.Formato) ? "text-end text-nowrap" : (col.Formato == "textolargo" ? "mg-celda-larga" : "");
+                        if (col.Nombre == "EstadoCuota" && texto != "")
+                        {
+                            var claseEstado = "badge " + EstadosCuota.Clase(texto);
+                            <td><span class="@claseEstado">@texto</span></td>
+                        }
+                        else
+                        {
+                            <td class="@claseTd" title="@(col.Formato == "textolargo" ? completo : "")">@texto</td>
+                        }
+                    }
+                    @if (Model.AccionFila != "")
+                    {
+                        <td class="text-end text-nowrap no-print">
+                            @if (Model.AccionFila == "carta")
+                            {
+                                var rutaCarta = new Dictionary<string, string>(Model.RutaParams) { ["codigo"] = fila["CodigoDeudor"] ?? "" };
+                                <a class="btn btn-sm btn-outline-primary" asp-controller="Reportes" asp-action="Cartas" asp-all-route-data="rutaCarta">
+                                    <i class="bi bi-envelope-heart me-1"></i>Carta
+                                </a>
+                            }
+                            else if (Model.AccionFila == "plan")
+                            {
+                                var rutaPlan = new Dictionary<string, string> { ["p_NumeroCredito"] = fila["NumeroCredito"] ?? "" };
+                                <a class="btn btn-sm btn-outline-primary" asp-controller="Reportes" asp-action="PlanPagos" asp-all-route-data="rutaPlan">
+                                    <i class="bi bi-table me-1"></i>Plan de pagos
+                                </a>
+                            }
+                        </td>
+                    }
+                </tr>
+            }
+        </tbody>
+        @if (Model.Totales.Count > 0)
+        {
+            <tfoot>
+                <tr class="fw-semibold">
+                    @for (var i = 0; i < Model.Columnas.Count; i++)
+                    {
+                        var col = Model.Columnas[i];
+                        if (Model.Totales.Contains(col.Nombre))
+                        {
+                            var total = col.Formato == "dinero" ? Formato.Quetzales(Suma(col.Nombre)) : Formato.Numero(Suma(col.Nombre));
+                            <td class="text-end text-nowrap">@total</td>
+                        }
+                        else if (i == 0)
+                        {
+                            <td>Totales</td>
+                        }
+                        else
+                        {
+                            <td></td>
+                        }
+                    }
+                    @if (Model.AccionFila != "")
+                    {
+                        <td class="no-print"></td>
+                    }
+                </tr>
+            </tfoot>
+        }
+    </table>
+</div>

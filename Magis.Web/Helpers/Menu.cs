@@ -4,8 +4,7 @@ namespace Magis.Web.Helpers;
 public record MenuItem(string Texto, string Icono, string Controlador, string Accion = "Index", bool Listo = true);
 
 public record MenuGrupo(string Titulo, MenuItem[] Items);
-
-// Definición del menú de navegación. Cada etapa del proyecto activa sus pantallas
+//Definición del menú de navegación. 
 public static class Menu
 {
     public static readonly MenuGrupo[] Grupos =
@@ -34,7 +33,7 @@ public static class Menu
         new("Consultas", new[]
         {
             new MenuItem("Consultas",  "bi-search",     "Consultas"),
-            new MenuItem("Reportes",   "bi-bar-chart-line", "Reportes", Listo: false)
+            new MenuItem("Reportes",   "bi-bar-chart-line", "Reportes")
         })
     };
 

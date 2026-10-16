@@ -1,0 +1,56 @@
+@model PlanPagosVm
+@{
+    ViewData["Title"] = "Plan de pagos · " + Model.NumeroCredito;
+    var c = Model.Credito;
+
+    var tabla = new TablaReporteVm
+    {
+        Id = "tPlan",
+        Filas = Model.Cuotas,
+        Columnas = Model.Columnas,
+        Totales = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            "Capital", "Interes", "ManejoCuenta", "SeguroAuto", "SeguroVida", "TotalCuota", "Pagado", "Pendiente"
+        }
+    };
+}
+
+@section Estilos {
+    <style media="print">
+        @@page { size: landscape; margin: 10mm; }
+    </style>
+}
+
+<div class="mg-encabezado">
+    <div>
+        <div class="text-muted small mb-1">Reporte 7</div>
+        <h1>Plan de pagos</h1>
+        <p>Crédito <strong>@Model.NumeroCredito</strong> · emitido el @Formato.Fecha(DateTime.Now)</p>
+    </div>
+    <div class="d-flex flex-wrap gap-2 no-print">
+        <a class="btn btn-outline-secondary" asp-action="Ver" asp-route-numero="7"><i class="bi bi-arrow-left me-1"></i>Volver al reporte</a>
+        <button type="button" class="btn btn-primary" data-imprimir><i class="bi bi-printer me-1"></i>Imprimir</button>
+    </div>
+</div>
+
+@if (c is not null)
+{
+    <section class="mg-panel mb-3">
+        <dl class="row mg-datos mb-0">
+            <dt class="col-sm-3 col-xl-2">Cliente</dt>
+            <dd class="col-sm-9 col-xl-4">@c["Cliente"]</dd>
+            <dt class="col-sm-3 col-xl-2">Vehículo</dt>
+            <dd class="col-sm-9 col-xl-4">@c["Vehiculo"]</dd>
+            <dt class="col-sm-3 col-xl-2">Monto financiado</dt>
+            <dd class="col-sm-9 col-xl-4">@Formato.Quetzales(c.Decimal("MontoFinanciado"))</dd>
+            <dt class="col-sm-3 col-xl-2">Plazo y tasa</dt>
+            <dd class="col-sm-9 col-xl-4">@c["Plazo"] meses · @Formato.Porcentaje(c.Decimal("TasaInteres")) anual</dd>
+        </dl>
+    </section>
+}
+
+<partial name="_TablaReporte" model="tabla" />
+
+<p class="text-muted small mt-3">
+    El saldo de capital es lo que queda del dinero prestado después de cada cuota; el interés de cada cuota se calcula sobre ese saldo.
+</p>

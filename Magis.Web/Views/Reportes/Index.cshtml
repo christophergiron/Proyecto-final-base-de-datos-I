@@ -1,0 +1,41 @@
+@model List<ReporteDef>
+@{
+    ViewData["Title"] = "Reportes";
+}
+
+<div class="mg-encabezado">
+    <div>
+        <h1>Reportes</h1>
+        <p>Reportes financieros del sistema. El menú se arma con los reportes que publica la API y cada uno explica para qué sirve.</p>
+    </div>
+</div>
+
+@if (Model.Count > 0)
+{
+    <div class="input-group mb-3 mg-buscador-tabla no-print">
+        <span class="input-group-text"><i class="bi bi-search"></i></span>
+        <input type="search" class="form-control" id="filtroReportes" placeholder="Buscar un reporte (mora, comisiones, vendedor...)"
+               aria-label="Buscar un reporte" />
+    </div>
+
+    <div class="row g-3" id="listaReportes">
+        @foreach (var r in Model)
+        {
+            var textoBusqueda = r.Numero + " " + r.Titulo + " " + r.Razon;
+            <div class="col-12 col-md-6 col-xl-4" data-reporte data-texto="@textoBusqueda">
+                <a class="mg-reporte-tarjeta" asp-action="Ver" asp-route-numero="@r.Numero">
+                    <span class="mg-num-reporte">@r.Numero</span>
+                    <span class="mg-reporte-texto">
+                        <strong>@r.Titulo</strong>
+                        <small>@ReportesFormato.Corto(r.Razon)</small>
+                    </span>
+                </a>
+            </div>
+        }
+    </div>
+    <p class="text-muted small mt-3 d-none" id="sinReportes">Ningún reporte coincide con la búsqueda.</p>
+}
+
+@section Scripts {
+    <script src="~/js/reportes.js" asp-append-version="true"></script>
+}
