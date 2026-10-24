@@ -1,11 +1,14 @@
 using System.Text.Json;
 using Magis.Api.Data;
+using Magis.Api.Middleware;
+using Microsoft.Data.SqlClient;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Magis.Api.Controllers;
 
-/// Un solo controlador para todas las entidades del sistema (ver Data/Catalogo.cs).
-///   GET    api/{entidad}                 -> sp_{Entidad}_Listar     (filtros opcionales en el query string)
+// Un solo controlador para todas las entidades del sistema (ver Data/Catalogo.cs).
+//   GET    api/{entidad}                 -> sp_{Entidad}_Listar     (filtros opcionales en el query string)
+
 [ApiController]
 [Route("api/{entidad}")]
 public class EntidadController : ControllerBase
@@ -67,7 +70,15 @@ public class EntidadController : ControllerBase
         if (!definicion.Sp.TryGetValue(accion, out var procedimiento))
             return StatusCode(405, new { error = $"La entidad '{entidad}' no permite la accion '{accion}'." });
 
-        var filas = await _sp.EjecutarAsync(procedimiento, parametros);
-        return Ok(filas);
+        try
+        {
+            var filas = await _sp.EjecutarAsync(procedimiento, parametros);
+            return Ok(filas);
+        }
+        catch (SqlException ex)
+        {
+            var (estado, mensaje) = ErrorHandlingMiddleware.Traducir(ex);
+            return StatusCode(estado, new { error = mensaje, codigo = ex.Number });
+        }
     }
 }

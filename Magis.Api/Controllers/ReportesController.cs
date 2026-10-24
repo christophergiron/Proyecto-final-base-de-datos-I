@@ -1,10 +1,12 @@
 using Magis.Api.Data;
+using Magis.Api.Middleware;
+using Microsoft.Data.SqlClient;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Magis.Api.Controllers;
 
 // Modulo de reportes. Cualquier procedimiento llamado  sp_Reporte_NN_Nombre  que exista en la base
-// aparece automaticamente aqui, sin tocar el codigo de la API
+// aparece automaticamente aqui, sin tocar el codigo de la API.
 [ApiController]
 [Route("api/reportes")]
 public class ReportesController : ControllerBase
@@ -24,7 +26,9 @@ public class ReportesController : ControllerBase
     [HttpGet]
     public async Task<IActionResult> Listar()
     {
-        var filas = await _sp.ConsultarAsync(SqlReportes);
+        List<Dictionary<string, object?>> filas;
+        try { filas = await _sp.ConsultarAsync(SqlReportes); }
+        catch (SqlException ex) { return Error(ex); }
         var reportes = filas
             .GroupBy(f => (string)f["Reporte"]!)
             .Select(g => new
@@ -39,7 +43,9 @@ public class ReportesController : ControllerBase
     [HttpGet("{nombre}")]
     public async Task<IActionResult> Ejecutar(string nombre)
     {
-        var filas = await _sp.ConsultarAsync(SqlReportes);
+        List<Dictionary<string, object?>> filas;
+        try { filas = await _sp.ConsultarAsync(SqlReportes); }
+        catch (SqlException ex) { return Error(ex); }
         var existentes = filas.Select(f => (string)f["Reporte"]!).Distinct().ToList();
 
         var procedimiento = existentes.FirstOrDefault(n => n.Equals(nombre, StringComparison.OrdinalIgnoreCase));
@@ -50,7 +56,20 @@ public class ReportesController : ControllerBase
         if (procedimiento is null)
             return NotFound(new { error = $"El reporte '{nombre}' no existe.", reportes = existentes });
 
-        var resultado = await _sp.EjecutarAsync(procedimiento, Parametros.DesdeQuery(Request.Query));
-        return Ok(resultado);
+        try
+        {
+            var resultado = await _sp.EjecutarAsync(procedimiento, Parametros.DesdeQuery(Request.Query));
+            return Ok(resultado);
+        }
+        catch (SqlException ex)
+        {
+            return Error(ex);
+        }
+    }
+
+    private IActionResult Error(SqlException ex)
+    {
+        var (estado, mensaje) = ErrorHandlingMiddleware.Traducir(ex);
+        return StatusCode(estado, new { error = mensaje, codigo = ex.Number });
     }
 }

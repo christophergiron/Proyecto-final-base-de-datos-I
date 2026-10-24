@@ -43,7 +43,7 @@ public class ErrorHandlingMiddleware
         }
     }
 
-    private static (int Estado, string Mensaje) Traducir(SqlException ex)
+    public static (int Estado, string Mensaje) Traducir(SqlException ex)
     {
         int n = ex.Number;
 

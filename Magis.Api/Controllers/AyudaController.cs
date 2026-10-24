@@ -1,9 +1,11 @@
 using Magis.Api.Data;
+using Magis.Api.Middleware;
+using Microsoft.Data.SqlClient;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Magis.Api.Controllers;
 
-// GET api/ayuda/cliente muestra, para cada accion de la entidad,
+// Documentacion automatica: GET api/ayuda/cliente muestra, para cada accion de la entidad,
 // el metodo HTTP, el procedimiento almacenado y los nombres/tipos de sus parametros.
 // Los parametros que se envian en el JSON deben llamarse exactamente asi (sin la arroba).
 [ApiController]
@@ -33,18 +35,26 @@ public class AyudaController : ControllerBase
         if (!Catalogo.Entidades.TryGetValue(entidad, out var definicion))
             return NotFound(new { error = $"La entidad '{entidad}' no existe.", entidades = Catalogo.Entidades.Keys });
 
-        var acciones = new List<object>();
-        foreach (var par in definicion.Sp)
+        try
         {
-            var parametros = await _sp.ConsultarAsync(SqlParametros, new { sp = "dbo." + par.Value });
-            acciones.Add(new
+            var acciones = new List<object>();
+            foreach (var par in definicion.Sp)
             {
-                accion = par.Key,
-                metodo = Metodos.GetValueOrDefault(par.Key, "GET"),
-                procedimiento = par.Value,
-                parametros
-            });
+                var parametros = await _sp.ConsultarAsync(SqlParametros, new { sp = "dbo." + par.Value });
+                acciones.Add(new
+                {
+                    accion = par.Key,
+                    metodo = Metodos.GetValueOrDefault(par.Key, "GET"),
+                    procedimiento = par.Value,
+                    parametros
+                });
+            }
+            return Ok(new { entidad, acciones });
         }
-        return Ok(new { entidad, acciones });
+        catch (SqlException ex)
+        {
+            var (estado, mensaje) = ErrorHandlingMiddleware.Traducir(ex);
+            return StatusCode(estado, new { error = mensaje, codigo = ex.Number });
+        }
     }
 }
